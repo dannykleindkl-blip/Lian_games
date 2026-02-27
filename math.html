@@ -111,6 +111,7 @@ body { font-family:'Baloo 2',cursive; background:#FFF5FC; min-height:100vh; over
 
 <!-- WELCOME -->
 <div class="screen active" id="screenWelcome">
+  <button class="home-fab" onclick="window.location.href='index.html'">🏠</button>
   <div class="welcome-star">🌟</div>
   <div class="big-name">Lian!</div>
   <div class="family-strip">
@@ -124,7 +125,7 @@ body { font-family:'Baloo 2',cursive; background:#FFF5FC; min-height:100vh; over
 
 <!-- MODE SELECT -->
 <div class="screen" id="screenModes">
-  <button class="home-fab" onclick="goWelcome()">🏠</button>
+  <button class="home-fab" onclick="window.location.href='index.html'">🏠</button>
   <div class="mode-grid">
     <button class="mode-btn" onclick="startGame('count')">
       <span class="mode-icon">🍎</span><span class="mode-tag">1️⃣2️⃣3️⃣</span>
@@ -143,7 +144,7 @@ body { font-family:'Baloo 2',cursive; background:#FFF5FC; min-height:100vh; over
 
 <!-- GAME -->
 <div class="screen" id="screenGame">
-  <button class="home-fab" onclick="showScreen('screenModes')">🏠</button>
+  <button class="home-fab" onclick="window.location.href='index.html'">🏠</button>
   <div class="top-bar">
     <div class="hearts-bar"  id="heartsBar">❤️❤️❤️</div>
     <div class="score-stars" id="scoreStars">☆</div>
@@ -162,7 +163,7 @@ body { font-family:'Baloo 2',cursive; background:#FFF5FC; min-height:100vh; over
   <div class="celeb-face"  id="celebFace">🏆</div>
   <div class="celeb-stars" id="celebStars">⭐⭐⭐</div>
   <div class="celeb-btns">
-    <button class="btn-big" onclick="goWelcome()">🏠</button>
+    <button class="btn-big" onclick="window.location.href='index.html'">🏠</button>
   </div>
 </div>
 
@@ -307,7 +308,7 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
-function goWelcome() { showScreen('screenWelcome'); speak('Hi Lian! Tap the arrow to play!'); }
+function goWelcome() { window.location.href='index.html'; }
 function goModes()   { showScreen('screenModes');   speak('Which game do you want to play? Tap one!'); }
 
 // ============================================================
@@ -540,8 +541,8 @@ function playTone(ok) {
 //  INIT
 // ============================================================
 window.onload = () => {
-  // Warm greeting — ElevenLabs will speak as soon as user taps play
-  // (browsers require a user gesture before playing audio)
+  // Small delay ensures browser audio policy allows autoplay
+  setTimeout(() => speak('Hi Liian! Welcome to Math Time! Tap the arrow to start playing!'), 600);
 };
 </script>
 </body>
