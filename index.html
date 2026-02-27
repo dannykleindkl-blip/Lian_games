@@ -132,7 +132,7 @@ for(let i=0;i<12;i++){
       <div class="card-title">Animals!</div>
       <div class="card-badge">🌿 Animal Explorer</div>
     </a>
-    <a class="game-card soon" href="#">
+    <a class="game-card soon" href="#" onclick="sabaMsg(); return false;">
       <div class="card-icon">🚀</div>
       <div class="card-title">More soon!</div>
       <div class="card-badge">🔒 Coming Soon</div>
@@ -149,8 +149,9 @@ const EL_MODEL = 'eleven_turbo_v2_5';
 let audioCache = {}, currentAudio = null;
 
 function phonetic(t) {
-  return t.replace(/\bLian\b/g,'Liian').replace(/\bBoaz\b/g,'Boaaz')
-          .replace(/\bSivan\b/g,'Sivaan').replace(/\bNaomi\b/g,'Noemi');
+  return t.replace(/\bLian\b/g,'Li-aan').replace(/\bBoaz\b/g,'Bo-az')
+          .replace(/\bSivan\b/g,'Si-van').replace(/\bNaomi\b/g,'Ne-o-mi')
+          .replace(/\bSaba\b/g,'Sah-ba').replace(/\bSavta\b/g,'Sahv-ta');
 }
 
 async function speak(text) {
@@ -194,6 +195,10 @@ function fallbackSpeak(text) {
 
 function playWelcome() {
   speak('Hi Liian! Welcome! Which game do you want to play today? Tap Math, or tap Animals!');
+}
+
+function sabaMsg() {
+  speak('More games from Saba and Savta are coming very soon! Stay tuned Liian!');
 }
 
 // Auto-play welcome on every page load

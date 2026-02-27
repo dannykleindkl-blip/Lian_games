@@ -184,10 +184,12 @@ let currentAudio = null;
 // Phonetic spellings so the voice says names correctly
 function phonetic(text) {
   return text
-    .replace(/\bLian\b/g,  'Liian')
-    .replace(/\bBoaz\b/g,  'Boaaz')
-    .replace(/\bSivan\b/g, 'Sivaan')
-    .replace(/\bNaomi\b/g, 'Noemi');
+    .replace(/\bLian\b/g,  'Li-aan')
+    .replace(/\bBoaz\b/g,  'Bo-az')
+    .replace(/\bSivan\b/g, 'Si-van')
+    .replace(/\bNaomi\b/g, 'Ne-o-mi')
+    .replace(/\bSaba\b/g,  'Sah-ba')
+    .replace(/\bSavta\b/g, 'Sahv-ta');
 }
 
 async function speak(text) {
