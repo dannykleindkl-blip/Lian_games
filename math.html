@@ -539,7 +539,20 @@ function playTone(ok) {
 // ============================================================
 window.onload = () => {
   // Small delay ensures browser audio policy allows autoplay
-  setTimeout(() => speak('Hi Liian! Welcome to Math Time! Tap the arrow to start playing!'), 600);
+  // Play welcome immediately + re-play on back-navigation
+  function playWelcome() {
+    speak('Hi Li-aan! Welcome to Math Time! Tap the arrow to play with the family!');
+  }
+  setTimeout(playWelcome, 700);
+  // Catches back-button / page restored from cache
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) setTimeout(playWelcome, 700);
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && document.getElementById('screenWelcome').classList.contains('active')) {
+      setTimeout(playWelcome, 500);
+    }
+  });
 };
 </script>
 </body>
