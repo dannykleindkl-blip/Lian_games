@@ -132,6 +132,13 @@ for(let i=0;i<12;i++){
       <div class="card-title">Animals!</div>
       <div class="card-badge">🌿 Animal Explorer</div>
     </a>
+    <a class="game-card animals" href="passover.html" style="border-color:#E8B84B;animation-delay:.5s;">
+      <span class="tap-hint">👆</span>
+      <div class="card-icon">🍷</div>
+      <div class="card-title">Passover!</div>
+      <div class="card-badge" style="background:linear-gradient(135deg,#C9942A,#E8B84B);color:#1A0A00;">🫓 Passover Hagada</div>
+    </a>
+
     <a class="game-card soon" href="#" onclick="sabaMsg(); return false;">
       <div class="card-icon">🚀</div>
       <div class="card-title">More soon!</div>
@@ -194,11 +201,11 @@ function fallbackSpeak(text) {
 }
 
 function playWelcome() {
-  speak('Hi Liian! Welcome! Which game do you want to play today? Tap Math, or tap Animals!');
+  speak('Hi Li-aan! Welcome to your games! You can play Math, Animals, or the Passover Hagada story! Which one today?');
 }
 
 function sabaMsg() {
-  speak('More games from Sab-ba and Sav-ta are coming very soon for Li-aan!');
+  speak('More games from Sab-ba and Sav-ta are coming very soon for Li-aan! Stay tuned!');
 }
 
 // Auto-play welcome on every page load
