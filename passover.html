@@ -275,27 +275,31 @@ body{
 
 /* ─── FOOD CHIPS ───────────────────────────────────────────────── */
 .fchip{
-  width:50px;height:50px;border-radius:10px;cursor:grab;overflow:hidden;
-  border:3px solid #C8A020;
+  width:64px;height:64px;border-radius:12px;cursor:grab;overflow:hidden;
+  border:3.5px solid #C8A020;
   display:flex;align-items:center;justify-content:center;
   background:linear-gradient(135deg,#FFF8D8,#EED878);
-  box-shadow:2px 3px 8px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.5);
+  box-shadow:3px 4px 10px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.5);
+  transition:transform .12s,box-shadow .12s;
 }
+.fchip:active{transform:scale(1.12);box-shadow:4px 6px 16px rgba(0,0,0,.35);}
+.fchip.lifting{transform:scale(1.18);box-shadow:6px 10px 22px rgba(0,0,0,.38);z-index:50;}
 .fchip.used{opacity:.18;pointer-events:none;}
 
 /* ─── PLATE SLOTS ──────────────────────────────────────────────── */
 .pslot{
-  position:absolute;width:42px;height:42px;border-radius:50%;
-  border:2.5px dashed rgba(255,255,255,.45);
-  display:flex;align-items:center;justify-content:center;font-size:1.2rem;
+  position:absolute;width:46px;height:46px;border-radius:50%;
+  border:2.5px dashed rgba(255,255,255,.5);
+  display:flex;align-items:center;justify-content:center;font-size:1.25rem;
   background:rgba(0,0,0,.15);transition:all .2s;
 }
+.pslot.hover{border-color:#FFD700;border-style:solid;background:rgba(255,215,0,.3);transform:scale(1.18);}
 .pslot.ok{border-style:solid;border-color:#FFD700;background:rgba(255,215,0,.2);animation:slotPop .3s ease;}
 @keyframes slotPop{0%{transform:scale(0)}70%{transform:scale(1.22)}100%{transform:scale(1)}}
 
 /* ─── SEDER PLATE ──────────────────────────────────────────────── */
 .plate{
-  width:min(158px,44vw);height:min(158px,44vw);
+  width:min(168px,47vw);height:min(168px,47vw);
   border-radius:50%;position:relative;flex-shrink:0;
   background:radial-gradient(circle at 36% 34%,#E8C060 0%,#C89030 48%,#A07020 70%,#8B5A18 100%);
   border:5px solid #D4A017;
@@ -1666,7 +1670,7 @@ body{
 // ═══════════════════════════════════════════════════════════════════
 // VOICE — Matilda (ElevenLabs — warm, bright, children's storytelling)
 // ═══════════════════════════════════════════════════════════════════
-const EL_KEY   = 'sk_4b62d8255ad4e8e65300dc28e5c9a237ce5fef775e088199';
+const EL_KEY   = '2f5b230f809e06f6363ea303b4e89fb53aab578e749aa66e8dab54647fa0965a';
 const EL_VOICE = 'XrExE9yKIg1WjnnlVkGX'; // Matilda — warm, bright, children's storytelling
 const EL_MODEL = 'eleven_multilingual_v2'; // richer, more expressive than turbo
 let vc={}, vcur=null;
@@ -1896,31 +1900,77 @@ function updateDots(){
 // DRAG ENGINE
 // ═══════════════════════════════════════════════════════════════════
 function makeDrag(el,onDrop){
-  let clone=null,ox=0,oy=0;
+  let clone=null, hw=0, hh=0;
+
   function start(cx,cy){
     const r=el.getBoundingClientRect();
-    ox=cx-r.left; oy=cy-r.top;
+    hw=r.width/2; hh=r.height/2;
     clone=el.cloneNode(true);
     clone.className='drag-clone';
-    clone.style.left=r.left+'px'; clone.style.top=r.top+'px';
-    clone.style.width=r.width+'px'; clone.style.height=r.height+'px';
+    // Centre clone under the finger — much easier for small hands
+    clone.style.left=(cx-hw)+'px';
+    clone.style.top=(cy-hh)+'px';
+    clone.style.width=r.width+'px';
+    clone.style.height=r.height+'px';
     clone.style.fontSize=getComputedStyle(el).fontSize;
-    document.body.appendChild(clone); el.style.opacity='.25';
+    clone.style.transform='scale(1.22)';
+    document.body.appendChild(clone);
+    el.classList.add('lifting');
+    el.style.opacity='.22';
   }
-  function move(cx,cy){if(!clone)return;clone.style.left=(cx-ox)+'px';clone.style.top=(cy-oy)+'px';}
+
+  function move(cx,cy){
+    if(!clone)return;
+    clone.style.left=(cx-hw)+'px';
+    clone.style.top=(cy-hh)+'px';
+    // Highlight any plate element being hovered
+    document.querySelectorAll('.plate').forEach(p=>{
+      const r=p.getBoundingClientRect();
+      const over=cx>r.left-20&&cx<r.right+20&&cy>r.top-20&&cy<r.bottom+20;
+      p.style.boxShadow=over
+        ? '0 0 0 4px #FFD700, 0 6px 22px rgba(0,0,0,.35)'
+        : '';
+      // Highlight nearest slot
+      p.querySelectorAll('.pslot:not(.ok)').forEach(s=>{
+        const sr=s.getBoundingClientRect();
+        const sc=cx>sr.left-18&&cx<sr.right+18&&cy>sr.top-18&&cy<sr.bottom+18;
+        s.classList.toggle('hover',sc);
+      });
+    });
+  }
+
   function end(cx,cy){
-    if(!clone)return; clone.remove(); clone=null; el.style.opacity='';
+    if(!clone)return;
+    clone.remove(); clone=null;
+    el.classList.remove('lifting');
+    el.style.opacity='';
+    // Remove all highlights
+    document.querySelectorAll('.plate').forEach(p=>p.style.boxShadow='');
+    document.querySelectorAll('.pslot.hover').forEach(s=>s.classList.remove('hover'));
     onDrop(el,cx,cy);
   }
+
   el.addEventListener('mousedown',e=>{
     e.preventDefault(); start(e.clientX,e.clientY);
     const mm=e2=>move(e2.clientX,e2.clientY);
-    const mu=e2=>{end(e2.clientX,e2.clientY);document.removeEventListener('mousemove',mm);document.removeEventListener('mouseup',mu);};
-    document.addEventListener('mousemove',mm); document.addEventListener('mouseup',mu);
+    const mu=e2=>{end(e2.clientX,e2.clientY);
+      document.removeEventListener('mousemove',mm);
+      document.removeEventListener('mouseup',mu);};
+    document.addEventListener('mousemove',mm);
+    document.addEventListener('mouseup',mu);
   });
-  el.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0];start(t.clientX,t.clientY);},{passive:false});
-  el.addEventListener('touchmove', e=>{e.preventDefault();const t=e.touches[0];move(t.clientX,t.clientY);},{passive:false});
-  el.addEventListener('touchend',  e=>{e.preventDefault();const t=e.changedTouches[0];end(t.clientX,t.clientY);},{passive:false});
+  el.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    const t=e.touches[0]; start(t.clientX,t.clientY);
+  },{passive:false});
+  el.addEventListener('touchmove',e=>{
+    e.preventDefault();
+    const t=e.touches[0]; move(t.clientX,t.clientY);
+  },{passive:false});
+  el.addEventListener('touchend',e=>{
+    e.preventDefault();
+    const t=e.changedTouches[0]; end(t.clientX,t.clientY);
+  },{passive:false});
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -2572,8 +2622,8 @@ const SF=[{n:'Pizza',t:'emoji',e:'🍕'},{n:'Burger',t:'emoji',e:'🍔'},{n:'Ice
 const SPOS=[[50,8],[82,28],[82,62],[50,84],[18,62],[18,28]];
 
 function getChipInner(food){
-  if(food.t==='emoji') return `<span style="font-size:1.4rem">${food.e}</span>`;
-  return makeFoodSVG(food.t,38,38);
+  if(food.t==='emoji') return `<span style="font-size:1.8rem">${food.e}</span>`;
+  return makeFoodSVG(food.t,48,48);
 }
 
 function initSeder(){
@@ -2587,6 +2637,29 @@ function initSeder(){
     s.style.left=(pos[0]/100*pw-21)+'px'; s.style.top=(pos[1]/100*pw-21)+'px';
     s.textContent='❓'; plate.appendChild(s);
   });
+  // Tap plate to place currently selected chip
+  plate.onclick = e => {
+    const sel = document.querySelector('.fchip._selected');
+    if(!sel) return;
+    const pr = plate.getBoundingClientRect();
+    // Find nearest open slot to the tap point
+    const x = e.clientX, y = e.clientY;
+    const slots = plate.querySelectorAll('.pslot');
+    let best=null, bestD=9999;
+    slots.forEach(s=>{
+      if(s.classList.contains('ok')) return;
+      const sr=s.getBoundingClientRect();
+      const cx=sr.left+sr.width/2, cy=sr.top+sr.height/2;
+      const d=Math.sqrt((x-cx)**2+(y-cy)**2);
+      if(d<bestD){bestD=d;best=s;}
+    });
+    if(!best) return;
+    // Simulate a drop on the plate centre
+    sel.dispatchEvent(new MouseEvent('mousedown',{clientX:x,clientY:y,bubbles:true}));
+    setTimeout(()=>{
+      document.dispatchEvent(new MouseEvent('mouseup',{clientX:x,clientY:y,bubbles:true}));
+    },30);
+  };
   const row=document.getElementById('foodRow'); if(!row)return;
   row.innerHTML='';
   [...SR,...SF].sort(()=>Math.random()-.5).forEach(food=>{
@@ -2612,13 +2685,32 @@ function initSeder(){
     makeDrag(chip,(el,x,y)=>{
       if(el.classList.contains('used'))return;
       const pr=plate.getBoundingClientRect();
-      if(x>pr.left&&x<pr.right&&y>pr.top&&y<pr.bottom){
+      // Generous hit zone — 36px padding around the plate
+      const PAD=36;
+      const onPlate=x>pr.left-PAD&&x<pr.right+PAD&&y>pr.top-PAD&&y<pr.bottom+PAD;
+      if(onPlate){
         if(isR){
-          const slots=plate.querySelectorAll('.pslot'); if(sIdx>=6)return;
-          slots[sIdx].innerHTML=food.t!=='emoji'?makeFoodSVG(food.t,28,28):`<span style="font-size:1.2rem">${food.e}</span>`;
-          slots[sIdx].classList.add('ok'); sIdx++; sederDone++;
+          const slots=plate.querySelectorAll('.pslot');
+          // Find nearest OPEN slot to drop point
+          let best=null, bestD=9999;
+          slots.forEach(s=>{
+            if(s.classList.contains('ok'))return;
+            const sr=s.getBoundingClientRect();
+            const cx=sr.left+sr.width/2, cy=sr.top+sr.height/2;
+            const d=Math.sqrt((x-cx)**2+(y-cy)**2);
+            if(d<bestD){bestD=d;best=s;}
+          });
+          const target = best || slots[sIdx];
+          if(!target||target.classList.contains('ok'))return;
+          target.innerHTML=food.t!=='emoji'?makeFoodSVG(food.t,30,30):`<span style="font-size:1.3rem">${food.e}</span>`;
+          target.classList.add('ok');
+          // Count how many are now filled
+          sederDone++;
+          // Keep sIdx pointing to next unfilled slot
+          const allSlots=plate.querySelectorAll('.pslot');
+          sIdx=0; allSlots.forEach((s,i)=>{if(s.classList.contains('ok'))sIdx=i+1;});
           el.classList.add('used'); el.style.opacity='';
-          el.style.position='static'; el.style.left=''; el.style.top=''; el.style.zIndex='';
+          el.style.position=''; el.style.left=''; el.style.top=''; el.style.zIndex='';
           tone(true); fb(food.t==='emoji'?food.e:'✨');
           document.getElementById('sMsg').textContent=food.n+' — '+food.d;
           speak(food.n+'! Great choice!');
@@ -2629,8 +2721,34 @@ function initSeder(){
           speak(food.n+' is yummy but it does not go on the Seder plate! Try the Passover foods!');
         }
       } else {
-        el.style.opacity=''; el.style.position='static'; el.style.left=''; el.style.top=''; el.style.zIndex='';
+        el.style.opacity=''; el.style.position=''; el.style.left=''; el.style.top=''; el.style.zIndex='';
       }
+    });
+
+    // ── TAP-TO-PLACE: tap chip to select, then tap plate to place ──
+    let tapping=false;
+    chip.addEventListener('click',e=>{
+      if(chip.classList.contains('used'))return;
+      if(chip._tapped){
+        // Second tap = deselect
+        chip._tapped=false;
+        chip.style.outline='';
+        chip.style.transform='';
+        document.querySelectorAll('.fchip._selected').forEach(c=>{
+          c._tapped=false;c.style.outline='';c.style.transform='';
+          c.classList.remove('_selected');
+        });
+        return;
+      }
+      // Deselect any other selected chip
+      document.querySelectorAll('.fchip._selected').forEach(c=>{
+        c._tapped=false;c.style.outline='';c.style.transform='';c.classList.remove('_selected');
+      });
+      chip._tapped=true;
+      chip.classList.add('_selected');
+      chip.style.outline='4px solid #FFD700';
+      chip.style.transform='scale(1.15)';
+      speak(food.n+'!');
     });
     row.appendChild(chip);
   });
