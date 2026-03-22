@@ -275,31 +275,49 @@ body{
 
 /* ─── FOOD CHIPS ───────────────────────────────────────────────── */
 .fchip{
-  width:64px;height:64px;border-radius:12px;cursor:grab;overflow:hidden;
+  width:68px;height:68px;border-radius:14px;cursor:pointer;overflow:hidden;
   border:3.5px solid #C8A020;
   display:flex;align-items:center;justify-content:center;
   background:linear-gradient(135deg,#FFF8D8,#EED878);
   box-shadow:3px 4px 10px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.5);
-  transition:transform .12s,box-shadow .12s;
+  transition:transform .15s,box-shadow .15s,border-color .15s;
+  -webkit-tap-highlight-color:transparent;
 }
-.fchip:active{transform:scale(1.12);box-shadow:4px 6px 16px rgba(0,0,0,.35);}
-.fchip.lifting{transform:scale(1.18);box-shadow:6px 10px 22px rgba(0,0,0,.38);z-index:50;}
+.fchip:active{transform:scale(1.08);}
+.fchip.selected{
+  border-color:#FF8C00;
+  box-shadow:0 0 0 4px rgba(255,140,0,.45),3px 4px 10px rgba(0,0,0,.25);
+  transform:scale(1.12);
+  animation:chipPulse .7s ease-in-out infinite alternate;
+}
+.fchip.used{opacity:.15;pointer-events:none;transform:none !important;border-color:#C8A020;}
+@keyframes chipPulse{from{box-shadow:0 0 0 4px rgba(255,140,0,.45)}to{box-shadow:0 0 0 8px rgba(255,140,0,.2)}}
 .fchip.used{opacity:.18;pointer-events:none;}
 
 /* ─── PLATE SLOTS ──────────────────────────────────────────────── */
 .pslot{
-  position:absolute;width:46px;height:46px;border-radius:50%;
-  border:2.5px dashed rgba(255,255,255,.5);
-  display:flex;align-items:center;justify-content:center;font-size:1.25rem;
-  background:rgba(0,0,0,.15);transition:all .2s;
+  position:absolute;width:48px;height:48px;border-radius:50%;
+  border:2.5px dashed rgba(255,255,255,.55);
+  display:flex;align-items:center;justify-content:center;font-size:1.3rem;
+  background:rgba(0,0,0,.18);transition:transform .18s,background .18s,border .18s;
 }
-.pslot.hover{border-color:#FFD700;border-style:solid;background:rgba(255,215,0,.3);transform:scale(1.18);}
-.pslot.ok{border-style:solid;border-color:#FFD700;background:rgba(255,215,0,.2);animation:slotPop .3s ease;}
+.pslot.ok{border-style:solid;border-color:#FFD700;background:rgba(255,215,0,.25);animation:slotPop .35s ease;}
 @keyframes slotPop{0%{transform:scale(0)}70%{transform:scale(1.22)}100%{transform:scale(1)}}
+.plate.ready{
+  box-shadow:0 0 0 5px #FFD700, 0 6px 22px rgba(0,0,0,.35);
+  animation:plateGlow .7s ease-in-out infinite alternate;
+}
+@keyframes plateGlow{from{box-shadow:0 0 0 4px #FFD700,0 6px 22px rgba(0,0,0,.35)}to{box-shadow:0 0 0 10px rgba(255,215,0,.35),0 6px 22px rgba(0,0,0,.35)}}
+#sArrow{
+  font-size:2.2rem;text-align:center;
+  animation:bounce .6s ease-in-out infinite alternate;
+  display:none;margin-top:2px;
+}
+@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-6px)}}
 
 /* ─── SEDER PLATE ──────────────────────────────────────────────── */
 .plate{
-  width:min(168px,47vw);height:min(168px,47vw);
+  width:min(176px,49vw);height:min(176px,49vw);
   border-radius:50%;position:relative;flex-shrink:0;
   background:radial-gradient(circle at 36% 34%,#E8C060 0%,#C89030 48%,#A07020 70%,#8B5A18 100%);
   border:5px solid #D4A017;
@@ -971,23 +989,14 @@ body{
       <div class="pnum">Chapter 5 of 8</div>
       <div class="ptitle" style="color:#8B5A00;">🍽️ The Seder Plate!</div>
 
-      <!-- Food preview overlay (inside pg5 so it shows over page content) -->
-      <div id="foodPreview" onclick="this.classList.remove('open')" style="display:none;position:fixed;inset:0;z-index:500;
-        background:rgba(0,0,0,.78);backdrop-filter:blur(5px);
-        align-items:center;justify-content:center;flex-direction:column;gap:10px;">
-        <div id="fpEmoji" style="width:140px;height:140px;display:flex;align-items:center;justify-content:center;"></div>
-        <div id="fpName" style="font-family:'Cinzel Decorative',serif;font-size:1.8rem;font-weight:900;color:#FFD700;text-align:center;"></div>
-        <div id="fpDesc" style="font-size:1rem;font-weight:700;color:rgba(255,255,255,.8);text-align:center;max-width:80%;"></div>
-        <div style="font-size:.8rem;color:rgba(255,255,255,.4);margin-top:4px;">tap to close</div>
-      </div>
-
       <div style="display:flex;flex-direction:column;align-items:center;gap:5px;">
         <div class="plate" id="sPlate">
           <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:1.4rem;opacity:.18;">🍽️</div>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;" id="foodRow"></div>
+        <div id="sArrow">👆🍽️</div>
         <div style="font-size:.72rem;font-weight:800;color:#8B5A00;text-align:center;min-height:1.1em;" id="sMsg">
-          Drag Passover foods onto the plate!
+          👆 Tap a food to pick it up!
         </div>
       </div>
 
@@ -1682,29 +1691,77 @@ const PH=t=>t
 
 function setTalk(on){document.querySelectorAll('.vbtn').forEach(b=>b.classList.toggle('tk',on));}
 
-async function speak(txt,cb){
-  if(!txt)return;
-  if(vcur){try{vcur.pause();vcur.currentTime=0;}catch(e){}}
-  window.speechSynthesis&&speechSynthesis.cancel();
-  const p=PH(txt); setTalk(true);
-  if(vc[p]){blobPlay(vc[p],cb);return;}
+// ── iOS audio unlock ──────────────────────────────────────────
+// iOS requires audio.play() from a direct gesture. We prime it
+// on the very first touch so subsequent plays work freely.
+let _iosUnlocked = false;
+function unlockiOSAudio(){
+  if(_iosUnlocked) return;
+  _iosUnlocked = true;
   try{
-    const r=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+EL_VOICE,{
+    // Play a silent buffer to unlock the audio context
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const buf = ctx.createBuffer(1,1,22050);
+    const src = ctx.createBufferSource();
+    src.buffer = buf; src.connect(ctx.destination); src.start(0);
+    ctx.resume();
+    // Also unlock HTML5 Audio
+    const sil = new Audio();
+    sil.play().catch(()=>{});
+  }catch(e){}
+}
+document.addEventListener('touchstart', unlockiOSAudio, {once:true, passive:true});
+document.addEventListener('click',      unlockiOSAudio, {once:true, passive:true});
+
+// ── Background pre-fetch ───────────────────────────────────────
+// Fetches ElevenLabs audio and stores blob URL in cache.
+// Called at page load and whenever user navigates to a new page.
+async function prefetch(txt){
+  if(!txt) return;
+  const p = PH(txt);
+  if(vc[p]) return; // already cached
+  try{
+    const r = await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+EL_VOICE,{
       method:'POST',
       headers:{'xi-api-key':EL_KEY,'Content-Type':'application/json','Accept':'audio/mpeg'},
-      body:JSON.stringify({text:p,model_id:EL_MODEL,
+      body:JSON.stringify({text:p, model_id:EL_MODEL,
         voice_settings:{stability:.68,similarity_boost:.88,style:.28,use_speaker_boost:true}})
     });
-    if(!r.ok)throw 0;
-    const u=URL.createObjectURL(await r.blob());
-    vc[p]=u; blobPlay(u,cb);
-  }catch(e){setTalk(false);fbSpeak(txt,cb);}
+    if(!r.ok) return;
+    vc[p] = URL.createObjectURL(await r.blob());
+  }catch(e){}
 }
+
+async function speak(txt,cb){
+  if(!txt) return;
+  if(vcur){try{vcur.pause();vcur.currentTime=0;}catch(e){}}
+  window.speechSynthesis&&speechSynthesis.cancel();
+  const p = PH(txt); setTalk(true);
+
+  // If already cached — play immediately (works on iOS from gesture)
+  if(vc[p]){ blobPlay(vc[p],cb); return; }
+
+  // Not cached — fetch now
+  try{
+    const r = await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+EL_VOICE,{
+      method:'POST',
+      headers:{'xi-api-key':EL_KEY,'Content-Type':'application/json','Accept':'audio/mpeg'},
+      body:JSON.stringify({text:p, model_id:EL_MODEL,
+        voice_settings:{stability:.68,similarity_boost:.88,style:.28,use_speaker_boost:true}})
+    });
+    if(!r.ok) throw 0;
+    const u = URL.createObjectURL(await r.blob());
+    vc[p] = u; blobPlay(u,cb);
+  }catch(e){ setTalk(false); fbSpeak(txt,cb); }
+}
+
 function blobPlay(u,cb){
-  const a=new Audio(u); vcur=a;
-  a.onended=()=>{setTalk(false);cb&&cb();};
-  a.onerror=()=>{setTalk(false);cb&&cb();};
-  a.play().catch(()=>{setTalk(false);cb&&cb();});
+  const a = new Audio(u); vcur = a;
+  a.onended = ()=>{ setTalk(false); cb&&cb(); };
+  a.onerror = ()=>{ setTalk(false); cb&&cb(); };
+  // iOS: must call play() synchronously — no await here
+  const p = a.play();
+  if(p && p.catch) p.catch(()=>{ setTalk(false); fbSpeak('',cb); });
 }
 function pickFemaleVoice(){
   const vs = speechSynthesis.getVoices();
@@ -1874,7 +1931,12 @@ function goPage(idx){
   if(idx===6)initQuestions();
   if(idx===8&&!afikOk)      initAfikoman();
   if(idx===9)               setTimeout(startConfetti,300);
-  setTimeout(()=>speak(NARR[idx]),650);
+  setTimeout(()=>{
+    speak(NARR[idx]);
+    // Pre-fetch next page narration in background while user reads this one
+    const nxt=NARR[idx+1];
+    if(nxt) setTimeout(()=>prefetch(nxt), 2000);
+  },650);
 }
 
 function speakNow(){speak(NARR[curPg]);}
@@ -2627,131 +2689,189 @@ function getChipInner(food){
 }
 
 function initSeder(){
-  if(sederDone===6){unlock(5);return;} // already complete — just unlock
+  if(sederDone===6){unlock(5);return;}
   sederDone=0; sIdx=0;
+  window._sederSel=null;
+
   const plate=document.getElementById('sPlate'); if(!plate)return;
+  const arrow=document.getElementById('sArrow');
+  const sMsg=document.getElementById('sMsg');
+
+  // Remove old slots
   plate.querySelectorAll('.pslot').forEach(s=>s.remove());
-  const pw=plate.offsetWidth||158;
+  plate.classList.remove('ready');
+  if(arrow) arrow.style.display='none';
+
+  // Build plate slots
+  const pw=plate.offsetWidth||176;
   SPOS.forEach((pos,i)=>{
-    const s=document.createElement('div'); s.className='pslot'; s.dataset.idx=i;
-    s.style.left=(pos[0]/100*pw-21)+'px'; s.style.top=(pos[1]/100*pw-21)+'px';
-    s.textContent='❓'; plate.appendChild(s);
+    const s=document.createElement('div');
+    s.className='pslot';
+    s.dataset.idx=i;
+    s.style.left=(pos[0]/100*pw-24)+'px';
+    s.style.top =(pos[1]/100*pw-24)+'px';
+    s.textContent='❓';
+    plate.appendChild(s);
   });
-  // Tap plate to place currently selected chip
-  plate.onclick = e => {
-    const sel = document.querySelector('.fchip._selected');
-    if(!sel) return;
-    const pr = plate.getBoundingClientRect();
-    // Find nearest open slot to the tap point
-    const x = e.clientX, y = e.clientY;
-    const slots = plate.querySelectorAll('.pslot');
-    let best=null, bestD=9999;
-    slots.forEach(s=>{
-      if(s.classList.contains('ok')) return;
-      const sr=s.getBoundingClientRect();
-      const cx=sr.left+sr.width/2, cy=sr.top+sr.height/2;
-      const d=Math.sqrt((x-cx)**2+(y-cy)**2);
-      if(d<bestD){bestD=d;best=s;}
-    });
-    if(!best) return;
-    // Simulate a drop on the plate centre
-    sel.dispatchEvent(new MouseEvent('mousedown',{clientX:x,clientY:y,bubbles:true}));
+
+  // ── Helpers ────────────────────────────────────────────────
+  function deselAll(){
+    document.querySelectorAll('.fchip.selected').forEach(c=>c.classList.remove('selected'));
+    window._sederSel=null;
+    plate.classList.remove('ready');
+    if(arrow) arrow.style.display='none';
+    if(sMsg) sMsg.textContent='👆 Tap a food to pick it up!';
+  }
+
+  function placeFood(food,chip,isR){
+    if(chip.classList.contains('used')) return;
+    if(!isR){
+      plate.style.animation='shake .4s ease';
+      setTimeout(()=>plate.style.animation='',460);
+      tone(false); fb('😄');
+      speak(food.n+' is yummy — but not a Passover food! Try another one!');
+      deselAll();
+      return;
+    }
+    const openSlots=[...plate.querySelectorAll('.pslot:not(.ok)')];
+    if(!openSlots.length) return;
+    const target=openSlots[0];
+
+    // Fly animation: chip flies from food row into the slot
+    const cr=chip.getBoundingClientRect();
+    const tr=target.getBoundingClientRect();
+    const fly=chip.cloneNode(true);
+    fly.style.cssText=[
+      'position:fixed',
+      'pointer-events:none',
+      'z-index:9999',
+      'border-radius:50%',
+      'transition:left .38s cubic-bezier(.25,1.4,.5,1),top .38s cubic-bezier(.25,1.4,.5,1),transform .38s ease,opacity .25s ease .2s',
+      'left:'+cr.left+'px',
+      'top:'+cr.top+'px',
+      'width:'+cr.width+'px',
+      'height:'+cr.height+'px',
+    ].join(';');
+    document.body.appendChild(fly);
+    const destX=tr.left+tr.width/2-cr.width/2;
+    const destY=tr.top+tr.height/2-cr.height/2;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      fly.style.left=destX+'px';
+      fly.style.top=destY+'px';
+      fly.style.transform='scale(0.5)';
+      fly.style.opacity='0';
+    }));
+
     setTimeout(()=>{
-      document.dispatchEvent(new MouseEvent('mouseup',{clientX:x,clientY:y,bubbles:true}));
-    },30);
+      fly.remove();
+      target.innerHTML=food.t!=='emoji'
+        ? makeFoodSVG(food.t,32,32)
+        : '<span style="font-size:1.35rem">'+food.e+'</span>';
+      target.classList.add('ok');
+      sederDone++;
+      chip.classList.add('used');
+      chip.classList.remove('selected');
+      deselAll();
+      tone(true); fb(food.t==='emoji'?food.e:'✨');
+      if(sMsg) sMsg.textContent=food.n+' ✅';
+      speak(food.n+'! Wonderful!');
+      if(sederDone===6)
+        speak('Amazing! The Seder plate is complete! You know all six special Passover foods!',
+              ()=>unlock(5));
+    }, 420);
+  }
+
+  // ── Plate tap handler ──────────────────────────────────────
+  // Remove old handler first to avoid duplicates
+  plate.onclick=null;
+  const plateHandler=e=>{
+    e.stopPropagation();
+    const sel=window._sederSel;
+    if(!sel) return;
+    placeFood(sel.food, sel.chip, sel.isR);
   };
+  plate.addEventListener('click', plateHandler);
+  plate.addEventListener('touchend', e=>{
+    e.preventDefault();
+    const sel=window._sederSel;
+    if(!sel) return;
+    placeFood(sel.food, sel.chip, sel.isR);
+  },{passive:false});
+
+  // ── Build food chips ───────────────────────────────────────
   const row=document.getElementById('foodRow'); if(!row)return;
   row.innerHTML='';
-  [...SR,...SF].sort(()=>Math.random()-.5).forEach(food=>{
-    const chip=document.createElement('div'); chip.className='fchip'; chip.title=food.n;
-    if(food.t!=='emoji'){chip.style.borderRadius='8px';chip.innerHTML=getChipInner(food);}
-    else chip.innerHTML=getChipInner(food);
-    const isR=SR.includes(food);
-    let tapX=0,tapY=0,dragged=false;
-    chip.addEventListener('mousedown',e=>{tapX=e.clientX;tapY=e.clientY;dragged=false;});
-    chip.addEventListener('touchstart',e=>{const t=e.touches[0];tapX=t.clientX;tapY=t.clientY;dragged=false;},{passive:true});
-    chip.addEventListener('mousemove',e=>{if(Math.abs(e.clientX-tapX)>6||Math.abs(e.clientY-tapY)>6)dragged=true;});
-    chip.addEventListener('click',()=>{
-      if(dragged||chip.classList.contains('used'))return;
-      const fp=document.getElementById('foodPreview');
-      if(fp){
-        document.getElementById('fpEmoji').innerHTML=food.t!=='emoji'?makeFoodSVG(food.t,120,120):`<span style="font-size:5rem">${food.e}</span>`;
-        document.getElementById('fpName').textContent=food.n;
-        document.getElementById('fpDesc').textContent=food.d||'';
-        fp.classList.add('open');
-        speak(food.n+'! '+(food.d||''));
-      }
-    });
-    makeDrag(chip,(el,x,y)=>{
-      if(el.classList.contains('used'))return;
-      const pr=plate.getBoundingClientRect();
-      // Generous hit zone — 36px padding around the plate
-      const PAD=36;
-      const onPlate=x>pr.left-PAD&&x<pr.right+PAD&&y>pr.top-PAD&&y<pr.bottom+PAD;
-      if(onPlate){
-        if(isR){
-          const slots=plate.querySelectorAll('.pslot');
-          // Find nearest OPEN slot to drop point
-          let best=null, bestD=9999;
-          slots.forEach(s=>{
-            if(s.classList.contains('ok'))return;
-            const sr=s.getBoundingClientRect();
-            const cx=sr.left+sr.width/2, cy=sr.top+sr.height/2;
-            const d=Math.sqrt((x-cx)**2+(y-cy)**2);
-            if(d<bestD){bestD=d;best=s;}
-          });
-          const target = best || slots[sIdx];
-          if(!target||target.classList.contains('ok'))return;
-          target.innerHTML=food.t!=='emoji'?makeFoodSVG(food.t,30,30):`<span style="font-size:1.3rem">${food.e}</span>`;
-          target.classList.add('ok');
-          // Count how many are now filled
-          sederDone++;
-          // Keep sIdx pointing to next unfilled slot
-          const allSlots=plate.querySelectorAll('.pslot');
-          sIdx=0; allSlots.forEach((s,i)=>{if(s.classList.contains('ok'))sIdx=i+1;});
-          el.classList.add('used'); el.style.opacity='';
-          el.style.position=''; el.style.left=''; el.style.top=''; el.style.zIndex='';
-          tone(true); fb(food.t==='emoji'?food.e:'✨');
-          document.getElementById('sMsg').textContent=food.n+' — '+food.d;
-          speak(food.n+'! Great choice!');
-          if(sederDone===6)speak('Amazing! The Seder plate is complete! You know all six special Passover foods!',()=>unlock(5));
-        } else {
-          el.style.opacity=''; el.style.position=''; el.style.left=''; el.style.top=''; el.style.zIndex='';
-          tone(false); fb('😄');
-          speak(food.n+' is yummy but it does not go on the Seder plate! Try the Passover foods!');
-        }
-      } else {
-        el.style.opacity=''; el.style.position=''; el.style.left=''; el.style.top=''; el.style.zIndex='';
-      }
-    });
 
-    // ── TAP-TO-PLACE: tap chip to select, then tap plate to place ──
-    let tapping=false;
-    chip.addEventListener('click',e=>{
-      if(chip.classList.contains('used'))return;
-      if(chip._tapped){
-        // Second tap = deselect
-        chip._tapped=false;
-        chip.style.outline='';
-        chip.style.transform='';
-        document.querySelectorAll('.fchip._selected').forEach(c=>{
-          c._tapped=false;c.style.outline='';c.style.transform='';
-          c.classList.remove('_selected');
-        });
+  const allFoods=[...SR,...SF].sort(()=>Math.random()-.5);
+  allFoods.forEach(food=>{
+    const chip=document.createElement('div');
+    chip.className='fchip';
+    chip.title=food.n;
+    chip.innerHTML=getChipInner(food);
+    const isR=SR.includes(food);
+
+    // Track touch movement to distinguish tap from scroll
+    let tStartX=0, tStartY=0, tMoved=false;
+    chip.addEventListener('touchstart', e=>{
+      const t=e.touches[0];
+      tStartX=t.clientX; tStartY=t.clientY; tMoved=false;
+    },{passive:true});
+    chip.addEventListener('touchmove', e=>{
+      const t=e.touches[0];
+      if(Math.abs(t.clientX-tStartX)>8||Math.abs(t.clientY-tStartY)>8) tMoved=true;
+    },{passive:true});
+
+    const handleSelect=()=>{
+      if(chip.classList.contains('used')) return;
+
+      // If this chip is already selected → deselect
+      if(window._sederSel && window._sederSel.chip===chip){
+        deselAll();
         return;
       }
-      // Deselect any other selected chip
-      document.querySelectorAll('.fchip._selected').forEach(c=>{
-        c._tapped=false;c.style.outline='';c.style.transform='';c.classList.remove('_selected');
-      });
-      chip._tapped=true;
-      chip.classList.add('_selected');
-      chip.style.outline='4px solid #FFD700';
-      chip.style.transform='scale(1.15)';
+
+      // Select this chip
+      deselAll();
+      chip.classList.add('selected');
+      window._sederSel={chip,food,isR};
+
+      // Show big clear instruction
+      plate.classList.add('ready');
+      if(arrow){ arrow.style.display='block'; }
+      if(sMsg){
+        sMsg.textContent = isR
+          ? '🍽️ Now tap the plate!'
+          : '❌ '+food.n+' is not a Passover food!';
+        sMsg.style.color = isR ? '#2A7A00' : '#AA2200';
+      }
       speak(food.n+'!');
+      tone(true);
+    };
+
+    chip.addEventListener('click', e=>{
+      e.stopPropagation();
+      handleSelect();
     });
+    chip.addEventListener('touchend', e=>{
+      if(!tMoved){
+        e.preventDefault();
+        e.stopPropagation();
+        handleSelect();
+      }
+    },{passive:false});
+
     row.appendChild(chip);
   });
+
+  // Tapping anywhere outside chips/plate deselects
+  const pgEl=document.getElementById('pg5');
+  if(pgEl){
+    pgEl._desel=e=>{
+      const t=e.target;
+      if(!t.closest('.fchip')&&!t.closest('.plate')) deselAll();
+    };
+    pgEl.addEventListener('click', pgEl._desel);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -2792,8 +2912,7 @@ const MANISHTANA=[
 ];
 function initQuestions(){
   questCount=0; questDone=false;
-  for(let i=0;i<4;i++){const c=document.getElementById('qq'+i);if(c){delete c.dataset.tapped;c.style.opacity='.7';c.style.borderColor='rgba(100,0,130,.22)';c.style.background='rgba(100,0,130,.07)';}const ck=document.getElementById('qck'+i);if(ck)ck.style.opacity='0';}
-  const qcEl2=document.getElementById('qcnt');if(qcEl2)qcEl2.textContent='0 / 4';
+  window._sederSel=null;
   for(let i=0;i<4;i++){
     const c=document.getElementById('qq'+i);
     if(c){delete c.dataset.tapped;c.style.opacity='.7';c.style.borderColor='rgba(100,0,130,.22)';c.style.background='rgba(100,0,130,.07)';}
@@ -2895,8 +3014,7 @@ function startConfetti(){
 function resetGame(){
   bDone=0; basketOk=false; fDone=0; seaOk=false;
   questCount=0; questDone=false;
-  for(let i=0;i<4;i++){const c=document.getElementById('qq'+i);if(c){delete c.dataset.tapped;c.style.opacity='.7';c.style.borderColor='rgba(100,0,130,.22)';c.style.background='rgba(100,0,130,.07)';}const ck=document.getElementById('qck'+i);if(ck)ck.style.opacity='0';}
-  const qcEl2=document.getElementById('qcnt');if(qcEl2)qcEl2.textContent='0 / 4';
+  window._sederSel=null;
   cupsDone=0; sederDone=0; afikOk=false; afikIdx=-1; sIdx=0;
   frogTimers.forEach(clearTimeout); frogTimers=[];
   stopWaveCanvas();
@@ -2924,7 +3042,7 @@ function resetGame(){
   const staff=document.getElementById('staff'); if(staff)staff.style.opacity='';
   // Reset seder
   document.getElementById('sPlate')?.querySelectorAll('.pslot').forEach(s=>s.remove());
-  const sMsg=document.getElementById('sMsg'); if(sMsg)sMsg.textContent='Drag Passover foods onto the plate!';
+  const sMsg=document.getElementById('sMsg'); if(sMsg)sMsg.textContent='👆 Tap a food to pick it up!';
   // Reset cups
   for(let i=0;i<4;i++){
     const c=document.getElementById('c'+i); if(c){c.classList.remove('poured');c.style.transform='';}
@@ -3006,10 +3124,16 @@ document.head.appendChild(xs);
 window.onload=()=>{
   const ae=document.getElementById('afikEnd');
   if(ae)ae.innerHTML=makeFoodSVG('matzah',80,80);
-  // Inject matzah SVG into questions page card
   const qm=document.getElementById('qqMatzah');
   if(qm)qm.innerHTML=makeFoodSVG('matzah',30,30);
-  setTimeout(()=>speak(NARR[0]),600);
+
+  // Pre-fetch first two narrations immediately so they're ready
+  // before the user taps anything (background — no gesture needed for fetch)
+  prefetch(NARR[0]);
+  prefetch(NARR[1]);
+
+  // Speak NARR[0] after a short delay — by then it may already be cached
+  setTimeout(()=>speak(NARR[0]), 800);
 };
 </script>
 </body>
