@@ -376,7 +376,7 @@ body{
 <div id="ytModal">
   <div id="ytBox">
     <button id="ytClose" onclick="closeYT()">✕</button>
-    <div id="ytHeader">🎵 The Four Questions Song — מה נשתנה 🎵</div>
+    <div id="ytHeader">🎵 Passover Song 🎵</div>
     <div id="ytFrameWrap">
       <iframe id="ytFrame"
         src=""
@@ -392,14 +392,14 @@ body{
           To watch the video inside the game,<br>open the game from a web server.<br>
           <span style="opacity:.6;font-size:.7rem;">For now, tap below to watch:</span>
         </div>
-        <a href="https://www.youtube.com/watch?v=zpxsH3i_zGc&t=4s"
+        <a id="ytFallbackLink" href="https://www.youtube.com/watch?v=zpxsH3i_zGc&t=4s"
            target="_blank"
            style="display:inline-flex;align-items:center;gap:8px;
                   background:#FF0000;color:white;text-decoration:none;
                   padding:10px 20px;border-radius:24px;
                   font-family:'Baloo 2',cursive;font-size:.85rem;font-weight:900;
                   box-shadow:0 4px 14px rgba(200,0,0,.5);">
-          ▶ Watch on YouTube
+          🎵
         </a>
       </div>
     </div>
@@ -987,6 +987,19 @@ body{
         </div>
       </div>
 
+      <div style="display:flex;justify-content:center;padding:2px 0;flex-shrink:0;">
+        <button onclick="openYT('https://www.youtube-nocookie.com/embed/o6xL72LIu6c?rel=0&playsinline=1','🍽️ The Seder Plate Song 🎵','https://www.youtube.com/watch?v=o6xL72LIu6c&amp;list=RDo6xL72LIu6c&amp;start_radio=1')" style="
+          background:linear-gradient(135deg,#C89020,#E8B030);
+          color:white;border:none;border-radius:50%;
+          width:54px;height:54px;font-size:1.7rem;cursor:pointer;
+          box-shadow:0 4px 14px rgba(180,130,0,.45);
+          display:inline-flex;align-items:center;justify-content:center;transition:transform .1s;
+        " onmousedown="this.style.transform='scale(.93)'" onmouseup="this.style.transform=''"
+          ontouchstart="this.style.transform='scale(.93)'" ontouchend="this.style.transform=''">
+          🎵
+        </button>
+      </div>
+
       <div class="spk" style="background:rgba(139,90,0,.1);border-color:#C89020;">
         <img src="data:image/jpeg;base64,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" alt="Imma">
         <div class="spk-txt" style="color:#4A2A00;">
@@ -1117,21 +1130,6 @@ body{
         <div style="background:rgba(122,10,155,.15);border:2px solid rgba(122,10,155,.35);border-radius:20px;padding:3px 10px;font-size:.75rem;font-weight:900;color:#7A0A9B;"><span id="qcnt">0 / 4</span> &#x2713;</div>
       </div>
 
-      <!-- YouTube Song Button -->
-      <div style="display:flex;justify-content:center;padding:2px 0;flex-shrink:0;">
-        <button onclick="openYT()" style="
-          background:linear-gradient(135deg,#7A0A9B,#B030E0);
-          color:white;border:none;border-radius:24px;
-          padding:7px 20px;font-family:'Baloo 2',cursive;
-          font-size:.82rem;font-weight:900;cursor:pointer;
-          box-shadow:0 3px 12px rgba(122,10,155,.45);
-          display:inline-flex;align-items:center;gap:6px;
-          transition:transform .1s;
-        " onmousedown="this.style.transform='scale(.93)'" onmouseup="this.style.transform=''" ontouchstart="this.style.transform='scale(.93)'" ontouchend="this.style.transform=''">
-          ▶ Watch the Song 🎵
-        </button>
-      </div>
-
       <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
         <div id="qq0" onclick="tapQ(0)"
           style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:10px;
@@ -1178,6 +1176,19 @@ body{
           <span id="qck3" style="font-size:1.3rem;opacity:0;transition:opacity .3s;">&#x2705;</span>
         </div>
 
+      </div>
+
+      <div style="display:flex;justify-content:center;padding:2px 0;flex-shrink:0;">
+        <button onclick="openYT('https://www.youtube-nocookie.com/embed/l-xBUR2JcNc?rel=0&playsinline=1','🎵 The Four Questions Song — מה נשתנה 🎵','https://www.youtube.com/watch?v=l-xBUR2JcNc&amp;list=RDl-xBUR2JcNc&amp;start_radio=1')" style="
+          background:linear-gradient(135deg,#7A0A9B,#B030E0);
+          color:white;border:none;border-radius:50%;
+          width:54px;height:54px;font-size:1.7rem;cursor:pointer;
+          box-shadow:0 4px 14px rgba(122,10,155,.5);
+          display:inline-flex;align-items:center;justify-content:center;transition:transform .1s;
+        " onmousedown="this.style.transform='scale(.93)'" onmouseup="this.style.transform=''"
+          ontouchstart="this.style.transform='scale(.93)'" ontouchend="this.style.transform=''">
+          🎵
+        </button>
       </div>
 
       <div class="spk" style="background:rgba(122,10,155,.08);border-color:#7A0A9B;flex-shrink:0;">
@@ -1314,6 +1325,19 @@ body{
           </svg>
           <div style="font-size:.62rem;font-weight:900;color:#661A33;margin-top:1px;text-align:center;">Cup 4</div>
         </div>
+      </div>
+
+      <div style="display:flex;justify-content:center;padding:2px 0;flex-shrink:0;">
+        <button onclick="openYT('https://www.youtube-nocookie.com/embed/aZcdS-L7mcE?rel=0&playsinline=1','🍷 Dayenu Song — דַּיֵּנוּ 🎵','https://www.youtube.com/watch?v=aZcdS-L7mcE&amp;list=RDl-xBUR2JcNc&amp;index=2')" style="
+          background:linear-gradient(135deg,#8B6000,#C89020);
+          color:white;border:none;border-radius:50%;
+          width:54px;height:54px;font-size:1.7rem;cursor:pointer;
+          box-shadow:0 4px 14px rgba(139,96,0,.45);
+          display:inline-flex;align-items:center;justify-content:center;transition:transform .1s;
+        " onmousedown="this.style.transform='scale(.93)'" onmouseup="this.style.transform=''"
+          ontouchstart="this.style.transform='scale(.93)'" ontouchend="this.style.transform=''">
+          🎵
+        </button>
       </div>
 
       <div class="spk" style="background:rgba(90,58,0,.1);border-color:#8B6000;">
@@ -1640,11 +1664,11 @@ body{
 <script>
 'use strict';
 // ═══════════════════════════════════════════════════════════════════
-// VOICE — Charlotte (confirmed female)
+// VOICE — Matilda (ElevenLabs — warm, bright, children's storytelling)
 // ═══════════════════════════════════════════════════════════════════
 const EL_KEY   = 'sk_4b62d8255ad4e8e65300dc28e5c9a237ce5fef775e088199';
-const EL_VOICE = 'XB0fDUnXU5powFXDhCwa'; // Charlotte
-const EL_MODEL = 'eleven_turbo_v2_5';
+const EL_VOICE = 'XrExE9yKIg1WjnnlVkGX'; // Matilda — warm, bright, children's storytelling
+const EL_MODEL = 'eleven_multilingual_v2'; // richer, more expressive than turbo
 let vc={}, vcur=null;
 
 const PH=t=>t
@@ -1665,7 +1689,7 @@ async function speak(txt,cb){
       method:'POST',
       headers:{'xi-api-key':EL_KEY,'Content-Type':'application/json','Accept':'audio/mpeg'},
       body:JSON.stringify({text:p,model_id:EL_MODEL,
-        voice_settings:{stability:.75,similarity_boost:.90,style:.12,use_speaker_boost:true}})
+        voice_settings:{stability:.68,similarity_boost:.88,style:.28,use_speaker_boost:true}})
     });
     if(!r.ok)throw 0;
     const u=URL.createObjectURL(await r.blob());
@@ -1679,22 +1703,71 @@ function blobPlay(u,cb){
   a.play().catch(()=>{setTalk(false);cb&&cb();});
 }
 function pickFemaleVoice(){
-  const vs=speechSynthesis.getVoices();
-  return vs.find(v=>v.lang.startsWith('en')&&/samantha|karen|moira|victoria|fiona|zira|tessa/i.test(v.name))
-      || vs.find(v=>v.lang==='en-GB')
-      || vs.find(v=>v.lang.startsWith('en'));
+  const vs = speechSynthesis.getVoices();
+  if(!vs.length) return null;
+
+  // Log available voices once for debugging (visible in Safari dev tools)
+  if(!window._voicesLogged){
+    window._voicesLogged=true;
+    console.log('[Passover voices]', vs.map(v=>v.name+'|'+v.lang).join(', '));
+  }
+
+  // Ordered preference — best for kids on iOS first
+  const pref = [
+    // iOS 17+ premium enhanced voices (warm, very natural)
+    v => /^ava/i.test(v.name) && /enhanced/i.test(v.name) && v.lang.startsWith('en'),
+    v => /^ava/i.test(v.name) && v.lang.startsWith('en'),
+    // iOS Nicky — friendly clear US female
+    v => /nicky/i.test(v.name) && v.lang.startsWith('en'),
+    // iOS Samantha Enhanced
+    v => /samantha/i.test(v.name) && /enhanced/i.test(v.name),
+    // iOS Samantha standard
+    v => /samantha/i.test(v.name),
+    // macOS/iOS other warm female voices
+    v => /karen|moira|tessa|fiona|victoria|allison|susan|zira/i.test(v.name) && v.lang.startsWith('en'),
+    // Any en-US voice
+    v => v.lang === 'en-US',
+    // Any English
+    v => v.lang.startsWith('en'),
+  ];
+  for(const fn of pref){
+    const found = vs.find(fn);
+    if(found) return found;
+  }
+  return vs[0];
 }
 function fbSpeak(txt,cb){
-  const u=new SpeechSynthesisUtterance(PH(txt));
-  u.rate=.82;u.pitch=1.25;u.lang='en-US';
-  const doIt=()=>{
-    const fv=pickFemaleVoice(); if(fv)u.voice=fv;
-    u.onend=()=>{setTalk(false);cb&&cb();};
-    u.onerror=()=>{setTalk(false);cb&&cb();};
-    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  const u = new SpeechSynthesisUtterance(PH(txt));
+  u.volume = 1;
+  u.lang   = 'en-US';
+  // Warm, slightly slow pace — perfect for a 5-year-old
+  u.rate   = 0.80;
+  u.pitch  = 1.15;
+
+  const doIt = () => {
+    const fv = pickFemaleVoice();
+    if(fv){
+      u.voice = fv;
+      u.lang  = fv.lang || 'en-US';
+      // Ava and Nicky sound best a tiny bit slower
+      if(/ava|nicky/i.test(fv.name)) u.rate = 0.76;
+    }
+    u.onend  = () => { setTalk(false); cb && cb(); };
+    u.onerror= () => { setTalk(false); cb && cb(); };
+    speechSynthesis.cancel();
+    // iOS: must wait ~80ms after cancel or first syllable is clipped
+    setTimeout(() => speechSynthesis.speak(u), 85);
   };
-  if(speechSynthesis.getVoices().length>0)doIt();
-  else{speechSynthesis.onvoiceschanged=()=>{speechSynthesis.onvoiceschanged=null;doIt();};setTimeout(doIt,500);}
+
+  if(speechSynthesis.getVoices().length > 0){
+    doIt();
+  } else {
+    speechSynthesis.onvoiceschanged = () => {
+      speechSynthesis.onvoiceschanged = null;
+      doIt();
+    };
+    setTimeout(doIt, 600);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1747,7 +1820,7 @@ function tone(good){
 // NARRATIONS
 // ═══════════════════════════════════════════════════════════════════
 const NARR=[
-  "Welcome to Passover Two, Lee-an! This is the amazing story of how the Jewish people went from slaves to FREE! Let's open the scroll and begin our adventure!",
+  "Welcome to Passover, Lee-an! This is the amazing story of how the Jewish people went from slaves to FREE! Let's open the scroll and begin our adventure!",
   "Long long ago in ancient Egypt, the mean Pharaoh made the Jewish people work SO hard building his enormous pyramids! They were very tired and sad. But God saw them and had a wonderful rescue plan! Help build the pyramid!",
   "A brave mama had a tiny baby called Moses. To keep him safe from Pharaoh, she put him in a little basket and floated him on the great Nile River! The princess found baby Moses and loved him. Drag the basket to safety!",
   "Moses told Pharaoh: Let my people go! But Pharaoh said NO! So God sent ten amazing plagues to Egypt — frogs jumping EVERYWHERE, darkness, hail and much more! Tap all the frogs!",
@@ -1983,7 +2056,14 @@ function initSea(){
       seaOk=true; el.style.opacity='0';
       tone(true); fb('🌊');
       if(seaAnim) seaAnim.triggerPart();
-      speak('Moses raised his magic stick... and the sea split wide open! The whole Jewish people walked safely through on dry ground! What an incredible miracle from God!', ()=>unlock(4));
+      speak('Moses raised his magic stick... and the sea split wide open! The whole Jewish people walked safely through on dry ground! What an incredible miracle from God!', ()=>{
+        unlock(4);
+        setTimeout(()=>openYT(
+          'https://www.youtube-nocookie.com/embed/EeduGySHa9o?rel=0&playsinline=1&autoplay=1',
+          '🌊 The Sea Splits! — Let My People Go 🎵',
+          'https://www.youtube.com/watch?v=EeduGySHa9o&list=RDEeduGySHa9o&start_radio=1'
+        ), 1500);
+      });
     } else { el.style.opacity=''; }
   });
 }
@@ -2747,23 +2827,27 @@ function resetGame(){
 // ═══════════════════════════════════════════════════════════════════
 // YOUTUBE MODAL
 // ═══════════════════════════════════════════════════════════════════
-function openYT(){
+function openYT(embedUrl, titleTxt, fallbackUrl){
+  // Store fallback URL so showYtFallback can use it
+  window._ytFallbackUrl = fallbackUrl || 'https://www.youtube.com';
+  // Update modal header
+  const hdr = document.getElementById('ytHeader');
+  if(hdr && titleTxt) hdr.textContent = titleTxt;
+  // Update fallback link href
+  const fa = document.getElementById('ytFallbackLink');
+  if(fa) fa.href = fallbackUrl || 'https://www.youtube.com';
   const frame=document.getElementById('ytFrame');
   const fallback=document.getElementById('ytFallback');
-  // Reset state
   fallback.style.display='none';
   frame.style.display='block';
-  // Use nocookie embed, no autoplay, no JS API — best chance of working
-  frame.src='https://www.youtube-nocookie.com/embed/zpxsH3i_zGc?start=4&rel=0&playsinline=1';
-  // If iframe fails to load within 4s, show the fallback button instead
+  frame.src = embedUrl;
   if(window._ytTimer)clearTimeout(window._ytTimer);
   window._ytTimer=setTimeout(()=>{
-    // Check if iframe actually loaded a valid player
     try{
       const doc=frame.contentDocument||frame.contentWindow.document;
       if(!doc||doc.title===''){showYtFallback();}
     }catch(e){
-      // Cross-origin means YouTube loaded (good) — do nothing
+      // Cross-origin means YouTube loaded (good)
     }
   },4000);
   document.getElementById('ytModal').classList.add('open');
