@@ -1731,25 +1731,6 @@ function playLocalAudio(filename, cb){
   a.play().catch(()=>{ setTalk(false); cb&&cb(); });
 }
 
-// ── Background pre-fetch ───────────────────────────────────────
-// Fetches ElevenLabs audio and stores blob URL in cache.
-// Called at page load and whenever user navigates to a new page.
-async function prefetch(txt){
-  if(!txt) return;
-  const p = PH(txt);
-  if(vc[p]) return; // already cached
-  try{
-    const r = await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+EL_VOICE,{
-      method:'POST',
-      headers:{'xi-api-key':EL_KEY,'Content-Type':'application/json','Accept':'audio/mpeg'},
-      body:JSON.stringify({text:p, model_id:EL_MODEL,
-        voice_settings:{stability:.68,similarity_boost:.88,style:.28,use_speaker_boost:true}})
-    });
-    if(!r.ok) return;
-    vc[p] = URL.createObjectURL(await r.blob());
-  }catch(e){}
-}
-
 async function speak(txt,cb){
   if(!txt) return;
   if(vcur){try{vcur.pause();vcur.currentTime=0;}catch(e){}}
@@ -1949,67 +1930,23 @@ function goPage(idx){
   if(idx===6)initQuestions();
   if(idx===8&&!afikOk)      initAfikoman();
   if(idx===9)               setTimeout(startConfetti,300);
-  // speakPage must be called promptly to stay within iOS gesture window
-  // We use a short delay only for the page animation to settle
-  setTimeout(()=>speakPage(idx), 400);
+  // Speak after brief delay so page animation settles
+  setTimeout(()=>{
+    if(idx===0) playLocalAudio('lian_opening.mp3');
+    else if(idx===9) playLocalAudio('lian_end.mp3');
+    else speak(NARR[idx]);
+  }, 650);
 }
 
-// Play the narration for a given page — iOS safe
-function speakPage(idx){
-  // Local recordings for specific pages
-  if(idx===0){ playLocalAudio('lian_opening.mp3'); prefetchAhead(idx); return; }
-  if(idx===9){ playLocalAudio('lian_end.mp3'); return; }
-
-  const txt = NARR[idx];
-  if(!txt) return;
-  const p = PH(txt);
-
-  // If already cached — play instantly (stays in gesture window)
-  if(vc[p]){ blobPlay(vc[p]); prefetchAhead(idx); return; }
-
-  // Not cached yet — on iOS we must call audio.play() NOW
-  // Create the audio element immediately and start a silent play
-  // then swap the src when the blob arrives
-  const a = new Audio();
-  vcur = a;
-  if(vcur){try{vcur.pause();vcur.currentTime=0;}catch(e){}}
-  setTalk(true);
-
-  // Start fetch in background
-  fetch('https://api.elevenlabs.io/v1/text-to-speech/'+EL_VOICE,{
-    method:'POST',
-    headers:{'xi-api-key':EL_KEY,'Content-Type':'application/json','Accept':'audio/mpeg'},
-    body:JSON.stringify({text:p,model_id:EL_MODEL,
-      voice_settings:{stability:.68,similarity_boost:.88,style:.28,use_speaker_boost:true}})
-  })
-  .then(r=>{ if(!r.ok) throw 0; return r.blob(); })
-  .then(blob=>{
-    const u = URL.createObjectURL(blob);
-    vc[p] = u;
-    // Stop any current audio and play the real narration
-    if(vcur){ try{vcur.pause();vcur.currentTime=0;}catch(e){} }
-    const a2 = new Audio(u); vcur = a2;
-    a2.onended = ()=>setTalk(false);
-    a2.onerror = ()=>{ setTalk(false); fbSpeak(txt); };
-    a2.play().catch(()=>{ setTalk(false); fbSpeak(txt); });
-  })
-  .catch(()=>{ setTalk(false); fbSpeak(txt); });
-
-  prefetchAhead(idx);
+function speakNow(){
+  if(curPg===0) playLocalAudio('lian_opening.mp3');
+  else if(curPg===9) playLocalAudio('lian_end.mp3');
+  else speak(NARR[curPg]);
 }
 
-function prefetchAhead(idx){
-  // Pre-fetch next 2 pages in background
-  [idx+1, idx+2].forEach(i=>{
-    const t=NARR[i]; if(t) setTimeout(()=>prefetch(t), 1500+(i-idx)*2000);
-  });
-}
-
-function speakNow(){ speakPage(curPg); }
-
-// Called by "Begin the Story" button — always a gesture, safe for iOS audio
+// "Begin the Story" button — gesture unlocks iOS audio, then navigate
 function startStory(){
-  playLocalAudio('lian_opening.mp3', ()=>goPage(1));
+  goPage(1);
 }
 function unlock(n){const b=document.getElementById('n'+n);if(b)b.classList.remove('lk');}
 
@@ -3198,15 +3135,14 @@ window.onload=()=>{
   const qm=document.getElementById('qqMatzah');
   if(qm)qm.innerHTML=makeFoodSVG('matzah',30,30);
 
-  // Pre-fetch narrations silently in background
-  // Do NOT auto-play on load — iOS requires a user gesture first
-  // The user will tap 🔊 or "Begin the Story" to start audio
-  setTimeout(()=>{ prefetch(NARR[1]); prefetch(NARR[2]); }, 500);
-  // Pulse the speaker button to invite a tap
+  // Auto-speak welcome (works on desktop/Android).
+  // On iOS, user taps 🔊 or Begin — unlockiOSAudio fires first.
+  setTimeout(()=>playLocalAudio('lian_opening.mp3'), 800);
+  // Pulse speaker button as visual invite
   setTimeout(()=>{
     const vb=document.getElementById('vb0');
     if(vb) vb.style.animation='pulse 1s ease-in-out infinite';
-  }, 1000);
+  }, 600);
 };
 </script>
 </body>
