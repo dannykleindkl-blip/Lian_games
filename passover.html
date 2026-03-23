@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1762,10 +1765,11 @@ function initAudio(){
     // 2. Unlock HTML5 Audio with a silent play
     const sil=new Audio(); sil.play().catch(()=>{});
   }catch(e){}
-  // 3. Pre-load lian_opening.mp3 into cache immediately
-  // (network fetch doesn't need a gesture — only .play() does)
-  const preload = new Audio('lian_opening.mp3');
-  preload.load(); // trigger browser to cache the file
+  // Pre-load all 3 recordings so they are cached before needed
+  ['lian_opening.mp3','lian_end.mp3','meomi_sea_split.mp3'].forEach(function(f){
+    const a=new Audio(f); a.load();
+  });
+
 }
 
 // ── Local audio files (personal recordings) ───────────────────
@@ -1986,10 +1990,10 @@ function goPage(idx){
   if(idx===6)initQuestions();
   if(idx===8&&!afikOk)      initAfikoman();
   if(idx===9)               setTimeout(startConfetti,300);
-  // Speak immediately — no setTimeout, stays in iOS gesture window
-  if(idx===0) playLocalAudio('lian_opening.mp3');
-  else if(idx===9) playLocalAudio('lian_end.mp3');
-  else speak(NARR[idx]);
+  // Speak page narration — audio unlocked by splash initAudio()
+  // pg0 is never navigated to (splash covers it), skip it
+  if(idx===9) playLocalAudio('lian_end.mp3');
+  else if(idx>0) speak(NARR[idx]);
 }
 
 function speakNow(){
@@ -3201,15 +3205,26 @@ document.head.appendChild(xs);
   }
 
   function dismissSplash(){
-    // 1. Unlock audio — this is inside a direct gesture handler
+    const btn=document.getElementById('splash-btn');
+    if(btn) btn.disabled=true; // prevent double-tap
+
+    // STEP 1: Unlock Web Audio (must be synchronous inside gesture)
     initAudio();
-    // 2. Play opening recording immediately (gesture window still open)
-    playLocalAudio('lian_opening.mp3');
-    // 3. Animate splash out
+
+    // STEP 2: Start fading splash immediately
     const splash=document.getElementById('splash');
-    if(!splash) return;
-    splash.classList.add('hiding');
-    setTimeout(()=>{ splash.classList.add('gone'); }, 850);
+    if(splash) splash.classList.add('hiding');
+
+    // STEP 3: Play opening voice — audio is now unlocked, play() will work
+    playLocalAudio('lian_opening.mp3', function(){
+      // Opening finished — now go to page 1 and speak page 1 narration
+      goPage(1);
+    });
+
+    // STEP 4: Hide splash DOM after fade (0.85s)
+    setTimeout(()=>{
+      if(splash) splash.classList.add('gone');
+    }, 850);
   }
 
   const btn = document.getElementById('splash-btn');
