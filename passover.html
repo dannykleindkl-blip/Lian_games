@@ -6,14 +6,28 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
+<meta name="mobile-web-app-capable" content="yes">
 <title>Passover 🌟</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Baloo+2:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
 /* ─── RESET & BASE ─────────────────────────────────────────────── */
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;}
-html,body{height:100%;overflow:hidden;}
+html,body{
+  height:100%;
+  height:-webkit-fill-available;
+  overflow:hidden;
+  background:#0A0418;
+}
+/* Cover notch/home bar safe areas on iPad */
+#wrap{
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
 body{
   font-family:'Baloo 2',cursive;
   background:#2C1A08;
@@ -1028,7 +1042,7 @@ body{
         <div class="spk-txt" style="color:#0A1A4A;">
           <b>Naomi says:</b> "The sea split in TWO?! That is the most amazing miracle EVER! 🌊"
         </div>
-        <button class="spk-vbtn" style="background:#1A3A8B;" onclick="playLocalAudio('meomi_sea_split.mp3')">🔊</button>
+        <button class="spk-vbtn" style="background:#1A3A8B;" id="seaSplitBtn">🔊</button>
       </div>
       <div class="bbar">
         <button class="arw" style="background:#1A3A8B;" onclick="goPage(3)">‹</button>
@@ -1782,7 +1796,8 @@ function playLocalAudio(filename, cb){
   a.onended = ()=>{ setTalk(false); cb&&cb(); };
   a.onerror = ()=>{
     setTalk(false);
-    // Fallback to ElevenLabs if file missing
+    console.error('[audio] FAILED TO LOAD: ' + filename + ' — check the file is uploaded to GitHub');
+    // Only opening/end have ElevenLabs fallback
     if(filename.includes('opening')) speak(NARR[0], cb);
     else if(filename.includes('end')) speak(NARR[9], cb);
     else if(cb) cb();
@@ -1992,12 +2007,14 @@ function goPage(idx){
   if(idx===9)               setTimeout(startConfetti,300);
   // Speak page narration — audio unlocked by splash initAudio()
   // pg0 is never navigated to (splash covers it), skip it
-  if(idx===9) playLocalAudio('lian_end.mp3');
+  if(idx===4) playLocalAudio('meomi_sea_split.mp3');
+  else if(idx===9) playLocalAudio('lian_end.mp3');
   else if(idx>0) speak(NARR[idx]);
 }
 
 function speakNow(){
   if(curPg===0) playLocalAudio('lian_opening.mp3');
+  else if(curPg===4) playLocalAudio('meomi_sea_split.mp3');
   else if(curPg===9) playLocalAudio('lian_end.mp3');
   else speak(NARR[curPg]);
 }
@@ -2759,7 +2776,7 @@ function initSeder(){
   sederDone=0; sIdx=0;
   window._sederSel=null;
 
-  const plate=document.getElementById('sPlate'); if(!plate)return;
+  let plate=document.getElementById('sPlate'); if(!plate)return;
   const arrow=document.getElementById('sArrow');
   const sMsg=document.getElementById('sMsg');
 
@@ -2768,29 +2785,22 @@ function initSeder(){
   plate.classList.remove('ready');
   if(arrow) arrow.style.display='none';
 
-  // Build plate slots
-  const pw=plate.offsetWidth||176;
-  SPOS.forEach((pos,i)=>{
-    const s=document.createElement('div');
-    s.className='pslot';
-    s.dataset.idx=i;
-    s.style.left=(pos[0]/100*pw-24)+'px';
-    s.style.top =(pos[1]/100*pw-24)+'px';
-    s.textContent='❓';
-    plate.appendChild(s);
-  });
+  // Slots built after plate clone below
 
   // ── Helpers ────────────────────────────────────────────────
   function deselAll(){
     document.querySelectorAll('.fchip.selected').forEach(c=>c.classList.remove('selected'));
     window._sederSel=null;
-    plate.classList.remove('ready');
+    const livePlate=document.getElementById('sPlate');
+    if(livePlate) livePlate.classList.remove('ready');
     if(arrow) arrow.style.display='none';
-    if(sMsg) sMsg.textContent='👆 Tap a food to pick it up!';
+    if(sMsg){ sMsg.textContent='👆 Tap a food to pick it up!'; sMsg.style.color=''; }
   }
 
   function placeFood(food,chip,isR){
     if(chip.classList.contains('used')) return;
+    const plate=document.getElementById('sPlate'); // always get live reference
+    if(!plate) return;
     if(!isR){
       plate.style.animation='shake .4s ease';
       setTimeout(()=>plate.style.animation='',460);
@@ -2799,7 +2809,7 @@ function initSeder(){
       deselAll();
       return;
     }
-    const openSlots=[...plate.querySelectorAll('.pslot:not(.ok)')];
+    const openSlots=[...document.querySelectorAll('#sPlate .pslot:not(.ok)')];
     if(!openSlots.length) return;
     const target=openSlots[0];
 
@@ -2847,22 +2857,35 @@ function initSeder(){
     }, 420);
   }
 
-  // ── Plate tap handler ──────────────────────────────────────
-  // Remove old handler first to avoid duplicates
-  plate.onclick=null;
-  const plateHandler=e=>{
+  // ── Plate tap handler — replace element to wipe all old listeners ──
+  const oldPlate = plate;
+  const newPlate = oldPlate.cloneNode(true); // copies children, removes listeners
+  oldPlate.parentNode.replaceChild(newPlate, oldPlate);
+  const plate2 = document.getElementById('sPlate'); // re-get after replace
+
+  // Re-attach slots to the new plate element (cloneNode copied them)
+  // Actually slots are rebuilt above so we just use plate2 from here
+  // Rebuild slots on the new plate2 element
+  plate2.querySelectorAll('.pslot').forEach(s=>s.remove());
+  const pw2=plate2.offsetWidth||176;
+  SPOS.forEach((pos,i)=>{
+    const s=document.createElement('div');
+    s.className='pslot'; s.dataset.idx=i;
+    s.style.left=(pos[0]/100*pw2-24)+'px';
+    s.style.top =(pos[1]/100*pw2-24)+'px';
+    s.textContent='❓';
+    plate2.appendChild(s);
+  });
+
+  function handlePlateTap(e){
+    e.preventDefault();
     e.stopPropagation();
     const sel=window._sederSel;
     if(!sel) return;
     placeFood(sel.food, sel.chip, sel.isR);
-  };
-  plate.addEventListener('click', plateHandler);
-  plate.addEventListener('touchend', e=>{
-    e.preventDefault();
-    const sel=window._sederSel;
-    if(!sel) return;
-    placeFood(sel.food, sel.chip, sel.isR);
-  },{passive:false});
+  }
+  plate2.addEventListener('click',    handlePlateTap, false);
+  plate2.addEventListener('touchend', handlePlateTap, {passive:false});
 
   // ── Build food chips ───────────────────────────────────────
   const row=document.getElementById('foodRow'); if(!row)return;
@@ -2902,7 +2925,8 @@ function initSeder(){
       window._sederSel={chip,food,isR};
 
       // Show big clear instruction
-      plate.classList.add('ready');
+      const livePlate2=document.getElementById('sPlate');
+      if(livePlate2) livePlate2.classList.add('ready');
       if(arrow){ arrow.style.display='block'; }
       if(sMsg){
         sMsg.textContent = isR
@@ -2932,6 +2956,7 @@ function initSeder(){
   // Tapping anywhere outside chips/plate deselects
   const pgEl=document.getElementById('pg5');
   if(pgEl){
+    if(pgEl._desel) pgEl.removeEventListener('click', pgEl._desel);
     pgEl._desel=e=>{
       const t=e.target;
       if(!t.closest('.fchip')&&!t.closest('.plate')) deselAll();
@@ -3241,6 +3266,22 @@ document.head.appendChild(xs);
     });
   }
 })();
+
+// ── Sea split recording button ─────────────────────────────────
+// Uses touchend (not onclick) for iOS audio compatibility
+document.addEventListener('DOMContentLoaded', function(){
+  const seaBtn = document.getElementById('seaSplitBtn');
+  if(seaBtn){
+    seaBtn.addEventListener('touchend', function(e){
+      e.preventDefault();
+      playLocalAudio('meomi_sea_split.mp3');
+    }, {passive:false});
+    seaBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      playLocalAudio('meomi_sea_split.mp3');
+    });
+  }
+});
 
 window.onload=()=>{
   const ae=document.getElementById('afikEnd');
