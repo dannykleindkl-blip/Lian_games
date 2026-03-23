@@ -380,6 +380,47 @@ body{
 @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
 @keyframes bfloat{0%,100%{transform:translate(-50%,-50%) translateY(0)}50%{transform:translate(-50%,-50%) translateY(-8px)}}
 @keyframes shimmer{0%{opacity:.4}50%{opacity:.9}100%{opacity:.4}}
+
+/* ── SPLASH SCREEN ─────────────────────────────────────────── */
+#splash{
+  position:fixed;inset:0;z-index:9999;
+  background:linear-gradient(160deg,#1A0428 0%,#3A0C5A 45%,#8B4A00 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:18px;padding:32px 24px;
+  transition:opacity .8s ease;
+}
+#splash.hiding{opacity:0;pointer-events:none;}
+#splash.gone{display:none;}
+#splash-title{
+  font-family:'Cinzel Decorative',cursive;
+  font-size:clamp(2rem,10vw,3.2rem);font-weight:900;
+  background:linear-gradient(135deg,#FFD700,#FF8C00,#FFD700);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  text-align:center;line-height:1.2;
+  animation:shimmer 2.5s ease-in-out infinite;
+}
+#splash-sub{
+  font-family:'Cinzel Decorative',cursive;
+  font-size:clamp(.85rem,4vw,1.1rem);
+  color:rgba(255,220,120,.8);text-align:center;letter-spacing:1px;
+}
+#splash-icon{font-size:clamp(3.5rem,16vw,5.5rem);animation:float 3s ease-in-out infinite;}
+#splash-btn{
+  margin-top:12px;padding:18px 42px;
+  background:linear-gradient(135deg,#FFD700,#FF8C00);
+  color:#1A0428;border:none;border-radius:50px;
+  font-family:'Baloo 2',cursive;font-size:clamp(1.1rem,5vw,1.4rem);font-weight:900;
+  cursor:pointer;letter-spacing:.5px;
+  box-shadow:0 6px 28px rgba(255,160,0,.55), 0 0 0 0 rgba(255,215,0,.4);
+  animation:splashPulse 1.8s ease-in-out infinite;
+  -webkit-tap-highlight-color:transparent;
+}
+@keyframes splashPulse{
+  0%,100%{box-shadow:0 6px 28px rgba(255,160,0,.55),0 0 0 0 rgba(255,215,0,.4)}
+  50%{box-shadow:0 6px 28px rgba(255,160,0,.7),0 0 0 14px rgba(255,215,0,0)}
+}
+#splash-stars{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+.sp-star{position:absolute;font-size:1.2rem;animation:floatStar linear infinite;opacity:.35;}
 @keyframes rivFlow{from{transform:translateX(0)}to{transform:translateX(-25%)}}
 @keyframes waveMarch{from{transform:translateX(0)}to{transform:translateX(-33.33%)}}
 @keyframes hopFrog{from{transform:translateY(0)}to{transform:translateY(-3px)}}
@@ -392,6 +433,18 @@ body{
 <body>
 
 <!-- FIXED BUTTONS -->
+<!-- ══ SPLASH SCREEN ═══════════════════════════════════════ -->
+<div id="splash">
+  <div id="splash-stars"></div>
+  <div id="splash-icon">🌟</div>
+  <div id="splash-title">Passover</div>
+  <div id="splash-sub">~ The Story of the Exodus ~</div>
+  <button id="splash-btn">✨ Begin! ✨</button>
+  <div style="font-size:.75rem;color:rgba(255,220,120,.45);margin-top:4px;font-family:'Baloo 2',cursive;">
+    Tap to start with sound 🔊
+  </div>
+</div>
+
 <button class="fab" id="hbtn" onclick="location.href='index.html'">🏠</button>
 <button class="fab" id="mbtn" onclick="toggleMusic()">🎵</button>
 <!-- ─── YOUTUBE MODAL ─────────────────────────────────────────── -->
@@ -1677,12 +1730,14 @@ body{
 <script>
 'use strict';
 // ═══════════════════════════════════════════════════════════════════
-// VOICE — Matilda (ElevenLabs — warm, bright, children's storytelling)
+// ═══════════════════════════════════════════════════════════════════
+// VOICE SYSTEM
 // ═══════════════════════════════════════════════════════════════════
 const EL_KEY   = '2f5b230f809e06f6363ea303b4e89fb53aab578e749aa66e8dab54647fa0965a';
-const EL_VOICE = 'XrExE9yKIg1WjnnlVkGX'; // Matilda — warm, bright, children's storytelling
-const EL_MODEL = 'eleven_multilingual_v2'; // richer, more expressive than turbo
+const EL_VOICE = 'XrExE9yKIg1WjnnlVkGX'; // Matilda
+const EL_MODEL = 'eleven_multilingual_v2';
 let vc={}, vcur=null;
+let _audioReady = false; // true after initAudio() runs
 
 const PH=t=>t
   .replace(/\bLian\b/gi,'Lee-an')
@@ -1691,29 +1746,29 @@ const PH=t=>t
 
 function setTalk(on){document.querySelectorAll('.vbtn').forEach(b=>b.classList.toggle('tk',on));}
 
-// ── iOS audio unlock ──────────────────────────────────────────
-// iOS requires audio.play() from a direct gesture. We prime it
-// on the very first touch so subsequent plays work freely.
-let _iosUnlocked = false;
-function unlockiOSAudio(){
-  if(_iosUnlocked) return;
-  _iosUnlocked = true;
+// ── initAudio: called by splash Start button (guaranteed gesture) ──
+// This is the ONE place we unlock iOS audio. After this runs,
+// all subsequent Audio.play() calls work — even in .then() callbacks.
+function initAudio(){
+  if(_audioReady) return;
+  _audioReady = true;
   try{
-    // Play a silent buffer to unlock the audio context
-    const ctx = new (window.AudioContext||window.webkitAudioContext)();
-    const buf = ctx.createBuffer(1,1,22050);
+    // 1. Unlock Web Audio context with a 0.1s silent buffer
+    const ctx = new(window.AudioContext||window.webkitAudioContext)();
+    const buf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * 0.1), ctx.sampleRate);
     const src = ctx.createBufferSource();
-    src.buffer = buf; src.connect(ctx.destination); src.start(0);
+    src.buffer=buf; src.connect(ctx.destination); src.start(0);
     ctx.resume();
-    // Also unlock HTML5 Audio
-    const sil = new Audio();
-    sil.play().catch(()=>{});
+    // 2. Unlock HTML5 Audio with a silent play
+    const sil=new Audio(); sil.play().catch(()=>{});
   }catch(e){}
+  // 3. Pre-load lian_opening.mp3 into cache immediately
+  // (network fetch doesn't need a gesture — only .play() does)
+  const preload = new Audio('lian_opening.mp3');
+  preload.load(); // trigger browser to cache the file
 }
-document.addEventListener('touchstart', unlockiOSAudio, {once:true, passive:true});
-document.addEventListener('click',      unlockiOSAudio, {once:true, passive:true});
 
-// ── Local audio files (recordings) ───────────────────────────
+// ── Local audio files (personal recordings) ───────────────────
 function playLocalAudio(filename, cb){
   if(vcur){try{vcur.pause();vcur.currentTime=0;}catch(e){}}
   window.speechSynthesis&&speechSynthesis.cancel();
@@ -1722,13 +1777,13 @@ function playLocalAudio(filename, cb){
   vcur = a;
   a.onended = ()=>{ setTalk(false); cb&&cb(); };
   a.onerror = ()=>{
-    // File not found — fall back to ElevenLabs/TTS
     setTalk(false);
+    // Fallback to ElevenLabs if file missing
     if(filename.includes('opening')) speak(NARR[0], cb);
-    else if(filename.includes('end'))    speak(NARR[9], cb);
-    else cb&&cb();
+    else if(filename.includes('end')) speak(NARR[9], cb);
+    else if(cb) cb();
   };
-  a.play().catch(()=>{ setTalk(false); cb&&cb(); });
+  a.play().catch(()=>{ setTalk(false); if(cb) cb(); });
 }
 
 function speak(txt,cb){
@@ -1943,10 +1998,9 @@ function speakNow(){
   else speak(NARR[curPg]);
 }
 
-// "Begin the Story" button — direct gesture, safe for iOS
+// startStory — called by pg0 "Begin" button
 function startStory(){
-  playLocalAudio('lian_opening.mp3'); // play opening recording
-  goPage(1);                          // navigate immediately (don't wait)
+  goPage(1);
 }
 function unlock(n){const b=document.getElementById('n'+n);if(b)b.classList.remove('lk');}
 
@@ -3129,19 +3183,57 @@ document.head.appendChild(xs);
 // ═══════════════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════════════
+// ══ SPLASH SCREEN LOGIC ════════════════════════════════════════
+(function(){
+  // Animate floating stars on splash
+  const sc = document.getElementById('splash-stars');
+  if(sc){
+    const emojis = ['✨','🌟','⭐','🕍','🌙','🫓','🍷','🌊'];
+    for(let i=0;i<14;i++){
+      const s=document.createElement('div'); s.className='sp-star';
+      s.textContent=emojis[i%emojis.length];
+      s.style.left=Math.random()*100+'vw';
+      s.style.animationDuration=(6+Math.random()*10)+'s';
+      s.style.animationDelay=(Math.random()*8)+'s';
+      s.style.fontSize=(.7+Math.random()*.9)+'rem';
+      sc.appendChild(s);
+    }
+  }
+
+  function dismissSplash(){
+    // 1. Unlock audio — this is inside a direct gesture handler
+    initAudio();
+    // 2. Play opening recording immediately (gesture window still open)
+    playLocalAudio('lian_opening.mp3');
+    // 3. Animate splash out
+    const splash=document.getElementById('splash');
+    if(!splash) return;
+    splash.classList.add('hiding');
+    setTimeout(()=>{ splash.classList.add('gone'); }, 850);
+  }
+
+  const btn = document.getElementById('splash-btn');
+  if(btn){
+    // touchend for iOS — fires before click, keeps gesture window open
+    btn.addEventListener('touchend', function(e){
+      e.preventDefault(); // prevent ghost click
+      dismissSplash();
+    }, {passive:false});
+    // click for desktop/Android
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      dismissSplash();
+    });
+  }
+})();
+
 window.onload=()=>{
   const ae=document.getElementById('afikEnd');
   if(ae)ae.innerHTML=makeFoodSVG('matzah',80,80);
   const qm=document.getElementById('qqMatzah');
   if(qm)qm.innerHTML=makeFoodSVG('matzah',30,30);
 
-  // Pulse 🔊 button to invite first tap (iOS needs a gesture before audio)
-  setTimeout(()=>{
-    const vb=document.getElementById('vb0');
-    if(vb) vb.style.animation='pulse 1s ease-in-out infinite';
-    // Auto-play on desktop/Android (will be blocked silently on iOS — that's ok)
-    playLocalAudio('lian_opening.mp3');
-  }, 800);
+  // Audio is handled by splash dismissSplash() — nothing to do here
 };
 </script>
 </body>
