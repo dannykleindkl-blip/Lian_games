@@ -526,7 +526,7 @@ body{
 
       <button class="vbtn" id="vb0" onclick="speakNow()"
         style="background:linear-gradient(135deg,#C85A00,#8B3800);margin:4px auto;">🔊</button>
-      <button class="open-btn" onclick="goPage(6)">Begin the Story ➡️</button>
+      <button class="open-btn" onclick="startStory()">Begin the Story ➡️</button>
     </div>
 
     <!-- PAGE 1: EGYPT -->
@@ -1958,7 +1958,6 @@ function goPage(idx){
 function speakPage(idx){
   // Local recordings for specific pages
   if(idx===0){ playLocalAudio('lian_opening.mp3'); prefetchAhead(idx); return; }
-  if(idx===4){ playLocalAudio('meomi_sea_split.mp3'); prefetchAhead(idx); return; }
   if(idx===9){ playLocalAudio('lian_end.mp3'); return; }
 
   const txt = NARR[idx];
@@ -2007,6 +2006,11 @@ function prefetchAhead(idx){
 }
 
 function speakNow(){ speakPage(curPg); }
+
+// Called by "Begin the Story" button — always a gesture, safe for iOS audio
+function startStory(){
+  playLocalAudio('lian_opening.mp3', ()=>goPage(1));
+}
 function unlock(n){const b=document.getElementById('n'+n);if(b)b.classList.remove('lk');}
 
 const PAGE_COLORS=['#C85A00','#C85A00','#1A5A8B','#8B0A0A','#1A3A8B','#C89020','#7A0A9B','#8B6000','#8B5018'];
@@ -3194,14 +3198,15 @@ window.onload=()=>{
   const qm=document.getElementById('qqMatzah');
   if(qm)qm.innerHTML=makeFoodSVG('matzah',30,30);
 
-  // Pre-fetch first two narrations immediately so they're ready
-  // before the user taps anything (background — no gesture needed for fetch)
-  prefetch(NARR[0]);
-  prefetch(NARR[1]);
-
-  // Pre-fetch first few pages, then speak page 0
-  prefetch(NARR[1]); prefetch(NARR[2]);
-  setTimeout(()=>speakPage(0), 800);
+  // Pre-fetch narrations silently in background
+  // Do NOT auto-play on load — iOS requires a user gesture first
+  // The user will tap 🔊 or "Begin the Story" to start audio
+  setTimeout(()=>{ prefetch(NARR[1]); prefetch(NARR[2]); }, 500);
+  // Pulse the speaker button to invite a tap
+  setTimeout(()=>{
+    const vb=document.getElementById('vb0');
+    if(vb) vb.style.animation='pulse 1s ease-in-out infinite';
+  }, 1000);
 };
 </script>
 </body>
