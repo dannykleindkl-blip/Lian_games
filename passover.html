@@ -1731,36 +1731,37 @@ function playLocalAudio(filename, cb){
   a.play().catch(()=>{ setTalk(false); cb&&cb(); });
 }
 
-async function speak(txt,cb){
+function speak(txt,cb){
   if(!txt) return;
   if(vcur){try{vcur.pause();vcur.currentTime=0;}catch(e){}}
   window.speechSynthesis&&speechSynthesis.cancel();
   const p = PH(txt); setTalk(true);
 
-  // If already cached — play immediately (works on iOS from gesture)
+  // Cached — play instantly
   if(vc[p]){ blobPlay(vc[p],cb); return; }
 
-  // Not cached — fetch now
-  try{
-    const r = await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+EL_VOICE,{
-      method:'POST',
-      headers:{'xi-api-key':EL_KEY,'Content-Type':'application/json','Accept':'audio/mpeg'},
-      body:JSON.stringify({text:p, model_id:EL_MODEL,
-        voice_settings:{stability:.68,similarity_boost:.88,style:.28,use_speaker_boost:true}})
-    });
-    if(!r.ok) throw 0;
-    const u = URL.createObjectURL(await r.blob());
-    vc[p] = u; blobPlay(u,cb);
-  }catch(e){ setTalk(false); fbSpeak(txt,cb); }
+  // Fetch then play — using .then() not async/await
+  // After unlockiOSAudio() has fired, this works on iOS too
+  fetch('https://api.elevenlabs.io/v1/text-to-speech/'+EL_VOICE,{
+    method:'POST',
+    headers:{'xi-api-key':EL_KEY,'Content-Type':'application/json','Accept':'audio/mpeg'},
+    body:JSON.stringify({text:p,model_id:EL_MODEL,
+      voice_settings:{stability:.68,similarity_boost:.88,style:.28,use_speaker_boost:true}})
+  })
+  .then(r=>{ if(!r.ok) throw 0; return r.blob(); })
+  .then(blob=>{
+    const u=URL.createObjectURL(blob);
+    vc[p]=u; blobPlay(u,cb);
+  })
+  .catch(()=>{ setTalk(false); fbSpeak(txt,cb); });
 }
 
 function blobPlay(u,cb){
-  const a = new Audio(u); vcur = a;
-  a.onended = ()=>{ setTalk(false); cb&&cb(); };
-  a.onerror = ()=>{ setTalk(false); cb&&cb(); };
-  // iOS: must call play() synchronously — no await here
-  const p = a.play();
-  if(p && p.catch) p.catch(()=>{ setTalk(false); fbSpeak('',cb); });
+  const a=new Audio(u); vcur=a;
+  a.onended=()=>{ setTalk(false); cb&&cb(); };
+  a.onerror=()=>{ setTalk(false); cb&&cb(); };
+  const pr=a.play();
+  if(pr&&pr.catch) pr.catch(()=>{ setTalk(false); cb&&cb(); });
 }
 function pickFemaleVoice(){
   const vs = speechSynthesis.getVoices();
@@ -1930,12 +1931,10 @@ function goPage(idx){
   if(idx===6)initQuestions();
   if(idx===8&&!afikOk)      initAfikoman();
   if(idx===9)               setTimeout(startConfetti,300);
-  // Speak after brief delay so page animation settles
-  setTimeout(()=>{
-    if(idx===0) playLocalAudio('lian_opening.mp3');
-    else if(idx===9) playLocalAudio('lian_end.mp3');
-    else speak(NARR[idx]);
-  }, 650);
+  // Speak immediately — no setTimeout, stays in iOS gesture window
+  if(idx===0) playLocalAudio('lian_opening.mp3');
+  else if(idx===9) playLocalAudio('lian_end.mp3');
+  else speak(NARR[idx]);
 }
 
 function speakNow(){
@@ -1944,9 +1943,10 @@ function speakNow(){
   else speak(NARR[curPg]);
 }
 
-// "Begin the Story" button — gesture unlocks iOS audio, then navigate
+// "Begin the Story" button — direct gesture, safe for iOS
 function startStory(){
-  goPage(1);
+  playLocalAudio('lian_opening.mp3'); // play opening recording
+  goPage(1);                          // navigate immediately (don't wait)
 }
 function unlock(n){const b=document.getElementById('n'+n);if(b)b.classList.remove('lk');}
 
@@ -3135,14 +3135,13 @@ window.onload=()=>{
   const qm=document.getElementById('qqMatzah');
   if(qm)qm.innerHTML=makeFoodSVG('matzah',30,30);
 
-  // Auto-speak welcome (works on desktop/Android).
-  // On iOS, user taps 🔊 or Begin — unlockiOSAudio fires first.
-  setTimeout(()=>playLocalAudio('lian_opening.mp3'), 800);
-  // Pulse speaker button as visual invite
+  // Pulse 🔊 button to invite first tap (iOS needs a gesture before audio)
   setTimeout(()=>{
     const vb=document.getElementById('vb0');
     if(vb) vb.style.animation='pulse 1s ease-in-out infinite';
-  }, 600);
+    // Auto-play on desktop/Android (will be blocked silently on iOS — that's ok)
+    playLocalAudio('lian_opening.mp3');
+  }, 800);
 };
 </script>
 </body>
