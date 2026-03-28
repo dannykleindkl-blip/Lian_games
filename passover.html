@@ -2061,30 +2061,27 @@ function goPage(idx){
   if(idx===6)initQuestions();
   if(idx===8&&!afikOk)      initAfikoman();
   if(idx===9)               setTimeout(startConfetti,300);
-  // Speak page narration — audio unlocked by splash initAudio()
+  // Auto-narration on page load: ElevenLabs for pages 1-8, local recordings for 0 & 9
   if(idx===9) playLocalAudio('lian_end.mp3');
-  else if(idx===1) playLocalAudio('boaz_Pyramids_page.mp3');
-  else if(idx===2) playLocalAudio('Sivan_mosses_in_the_river_page.mp3');
-  else if(idx===3) playLocalAudio('Boaz_frogs_page.mp3');
-  else if(idx===4) playLocalAudio('meomi_sea_split.mp3');
-  else if(idx===5) playLocalAudio('Sivan_plate_page.mp3');
-  else if(idx===6) playLocalAudio('Lian_questions_page.mp3');
-  else if(idx===7) playLocalAudio('Lian_cups_page.mp3');
-  else if(idx===8) playLocalAudio('boaz_afikomen_page.mp3');
   else if(idx>0) speak(NARR[idx]);
 }
 
+// PAGE_RECORDINGS: family MP3s played when 🔊 button is pressed
+const PAGE_RECORDINGS = {
+  0: 'lian_opening.mp3',
+  1: 'boaz_Pyramids_page.mp3',
+  2: 'Sivan_mosses_in_the_river_page.mp3',
+  3: 'Boaz_frogs_page.mp3',
+  4: 'meomi_sea_split.mp3',
+  5: 'Sivan_plate_page.mp3',
+  6: 'Lian_questions_page.mp3',
+  7: 'Lian_cups_page.mp3',
+  8: 'boaz_afikomen_page.mp3',
+  9: 'lian_end.mp3',
+};
 function speakNow(){
-  if(curPg===0) playLocalAudio('lian_opening.mp3');
-  else if(curPg===1) playLocalAudio('boaz_Pyramids_page.mp3');
-  else if(curPg===2) playLocalAudio('Sivan_mosses_in_the_river_page.mp3');
-  else if(curPg===3) playLocalAudio('Boaz_frogs_page.mp3');
-  else if(curPg===4) playLocalAudio('meomi_sea_split.mp3');
-  else if(curPg===5) playLocalAudio('Sivan_plate_page.mp3');
-  else if(curPg===6) playLocalAudio('Lian_questions_page.mp3');
-  else if(curPg===7) playLocalAudio('Lian_cups_page.mp3');
-  else if(curPg===8) playLocalAudio('boaz_afikomen_page.mp3');
-  else if(curPg===9) playLocalAudio('lian_end.mp3');
+  const rec = PAGE_RECORDINGS[curPg];
+  if(rec) playLocalAudio(rec);
   else speak(NARR[curPg]);
 }
 
@@ -3433,7 +3430,7 @@ window.onload=()=>{
 
   // Audio is handled by splash dismissSplash() — nothing to do here
 };
-  console.log('App Version: 2.5 — family voice recordings');
+  console.log('App Version: 2.6 — recordings on button, narration on nav');
 </script>
 </body>
 </html>
