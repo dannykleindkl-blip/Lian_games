@@ -109,7 +109,7 @@ body{
 /* ─── PAGES ────────────────────────────────────────────────────── */
 .pg{
   display:none;flex-direction:column;
-  min-height:min(82vh,560px);
+  min-height:100vh;
   padding:16px 18px 12px;
   position:relative;z-index:3;
   animation:pgIn .4s ease both;
@@ -260,7 +260,7 @@ body{
 }
 
 /* ─── DRAG CLONE ───────────────────────────────────────────────── */
-.drag-clone{position:fixed;pointer-events:none;z-index:9999;
+.drag-clone{position:fixed;pointer-events:none;z-index:9999;touch-action:none;
   transform:scale(1.18);filter:drop-shadow(0 6px 14px rgba(0,0,0,.4));}
 
 /* ─── PAGE FLIP ────────────────────────────────────────────────── */
@@ -2024,7 +2024,7 @@ function goPage(idx){
   curPg=idx;
   document.getElementById('pg'+curPg).classList.add('active');
   updateDots();
-  if(idx===1&&bDone===0)    initBricks();
+  if(idx===1)               initBricks();
   if(idx===2&&!basketOk)    initBasket();
   if(idx===3&&fDone===0)    initFrogs();
   if(idx===4){if(!seaOk)initSea(); else startSeaCanvas(true);}
@@ -2075,6 +2075,8 @@ function updateDots(){
 // ═══════════════════════════════════════════════════════════════════
 function makeDrag(el,onDrop){
   let clone=null, hw=0, hh=0;
+  // CRITICAL: must set before touchstart fires, else iOS scroll wins
+  el.style.touchAction='none';
 
   function start(cx,cy){
     const r=el.getBoundingClientRect();
@@ -2154,21 +2156,27 @@ const BSLOTS=['bs0','bs1','bs2','bs3','bs4','bs5','bs6','bs7','bs8','bs9'];
 function initBricks(){
   for(let i=0;i<10;i++){
     const el=document.getElementById('br'+i); if(!el)continue;
+    if(el.style.pointerEvents==='none') continue; // already placed
+    if(el._dragInit) continue; // already has listeners
+    el._dragInit=true;
     makeDrag(el,(el,x,y)=>{
       if(bDone>=10)return;
       const svg=document.getElementById('pyrSVG'); if(!svg)return;
-      const svgR=svg.getBoundingClientRect();
       let best=null,bestD=9999;
       BSLOTS.forEach(sid=>{
         const sl=document.getElementById(sid); if(!sl||sl.dataset.filled)return;
-        const sx=parseFloat(sl.getAttribute('x')),sy=parseFloat(sl.getAttribute('y'));
-        const sw=parseFloat(sl.getAttribute('width')),sh=parseFloat(sl.getAttribute('height'));
-        const sc=svgR.width/320;
-        const scX=svgR.left+sx*sc, scY=svgR.top+sy*sc;
-        const dist=Math.sqrt((x-(scX+sw*sc/2))**2+(y-(scY+sh*sc/2))**2);
-        if(dist<bestD){bestD=dist;best={sl,sx,sy,sw,sh};}
+        // Use getBoundingClientRect() directly on each SVG rect —
+        // this is always accurate regardless of preserveAspectRatio
+        const r=sl.getBoundingClientRect();
+        const cx=r.left+r.width/2, cy=r.top+r.height/2;
+        const dist=Math.sqrt((x-cx)**2+(y-cy)**2);
+        if(dist<bestD){bestD=dist;best={sl,
+          sx:parseFloat(sl.getAttribute('x')),
+          sy:parseFloat(sl.getAttribute('y')),
+          sw:parseFloat(sl.getAttribute('width')),
+          sh:parseFloat(sl.getAttribute('height'))};}
       });
-      if(best&&bestD<90){
+      if(best&&bestD<120){
         best.sl.setAttribute('fill','#C87020');
         best.sl.setAttribute('stroke','#8B4800');
         best.sl.setAttribute('stroke-dasharray','0');
@@ -3196,6 +3204,7 @@ function startConfetti(){
 // ═══════════════════════════════════════════════════════════════════
 function resetGame(){
   bDone=0; basketOk=false; fDone=0; seaOk=false;
+  for(let i=0;i<10;i++){const b=document.getElementById('br'+i);if(b){b._dragInit=false;b.style.opacity='';b.style.pointerEvents='';}}
   questCount=0; questDone=false;
   window._sederSel=null;
   cupsDone=0; sederDone=0; afikOk=false; afikIdx=-1; sIdx=0;
