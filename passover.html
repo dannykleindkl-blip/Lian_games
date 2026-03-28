@@ -72,7 +72,8 @@ body{
 /* ─── PAPYRUS BODY ─────────────────────────────────────────────── */
 #parch{
   position:relative;
-  min-height:100vh;
+  height:100vh;
+  height:100dvh;
   overflow:hidden;
   background:
     radial-gradient(ellipse at 12% 8%,rgba(255,255,255,.22),transparent 30%),
@@ -109,14 +110,15 @@ body{
 /* ─── PAGES ────────────────────────────────────────────────────── */
 .pg{
   display:none;flex-direction:column;
-  min-height:100vh;
-  max-height:100vh;
-  padding:16px 18px 12px;
+  height:100vh;
+  height:100dvh;
+  padding:8px 18px 8px;
   position:relative;z-index:3;
   animation:pgIn .4s ease both;
   overflow:hidden;
+  box-sizing:border-box;
 }
-/* Inner scroll area so bbar stays visible */
+/* Scrollable middle area (used on questions page) */
 .pg-scroll{
   flex:1;overflow-y:auto;overflow-x:hidden;
   -webkit-overflow-scrolling:touch;
@@ -127,34 +129,37 @@ body{
 
 /* ─── PAGE TITLE ───────────────────────────────────────────────── */
 .pnum{font-size:.6rem;font-weight:800;letter-spacing:3px;
-  color:rgba(140,80,10,.65);text-align:center;text-transform:uppercase;margin-bottom:1px;}
+  color:rgba(140,80,10,.65);text-align:center;text-transform:uppercase;margin-bottom:1px;flex-shrink:0;}
 .ptitle{
   font-family:'Cinzel Decorative',serif;
-  font-size:clamp(1rem,5.5vw,1.5rem);font-weight:900;
-  text-align:center;line-height:1.2;margin-bottom:8px;
-  text-shadow:1px 1px 0 rgba(0,0,0,.12);
+  font-size:clamp(.9rem,4.5vw,1.4rem);font-weight:900;
+  text-align:center;line-height:1.2;margin-bottom:4px;
+  text-shadow:1px 1px 0 rgba(0,0,0,.12);flex-shrink:0;
 }
 
 /* ─── SCENE ────────────────────────────────────────────────────── */
 .scene{
-  border-radius:14px;overflow:hidden;flex-shrink:0;
-  height:clamp(160px,38vw,280px);position:relative;
+  border-radius:14px;overflow:hidden;
+  flex:1 1 0;          /* grow to fill all available space */
+  min-height:120px;    /* never collapse below this */
+  max-height:55vh;     /* never dominate on tall phones */
+  position:relative;
   box-shadow:0 4px 18px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.3);
   border:2px solid rgba(180,120,10,.2);
 }
 
 /* ─── INSTRUCTION BAR ──────────────────────────────────────────── */
 .instr{
-  font-size:.8rem;font-weight:900;text-align:center;
-  padding:5px 12px;border-radius:24px;
+  font-size:.78rem;font-weight:900;text-align:center;
+  padding:4px 10px;border-radius:24px;
   display:inline-block;align-self:center;
-  margin:5px 0 3px;cursor:pointer;
-  transition:transform .1s;
+  margin:3px 0 2px;cursor:pointer;
+  transition:transform .1s;flex-shrink:0;
 }
 .instr:active{transform:scale(.93);}
 
 /* ─── SPEAKER BUBBLE ───────────────────────────────────────────── */
-.spk{display:flex;align-items:center;gap:8px;margin-top:auto;
+.spk{display:flex;align-items:center;gap:8px;margin-top:4px;
   border-radius:12px;padding:7px 10px;border:2px solid;}
 .spk img{width:40px;height:40px;border-radius:50%;object-fit:cover;
   border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.2);flex-shrink:0;}
@@ -167,7 +172,7 @@ body{
 
 /* ─── BOTTOM BAR ───────────────────────────────────────────────── */
 .bbar{display:flex;align-items:center;justify-content:space-between;
-  padding-top:8px;margin-top:6px;}
+  padding-top:6px;margin-top:4px;flex-shrink:0;}
 .arw{width:46px;height:46px;border-radius:50%;border:none;
   cursor:pointer;font-size:1.4rem;font-weight:900;color:white;
   display:flex;align-items:center;justify-content:center;
@@ -1142,7 +1147,7 @@ function ytFrameError(){if(typeof showYtFallback==='function')showYtFallback();}
       <div class="pnum">Chapter 6 of 8</div>
       <div class="ptitle" style="color:#7A0A9B;">&#x2753; The Four Questions!</div>
 
-      <div class="scene" style="overflow:hidden;background:#0A0418;flex-shrink:0;">
+      <div class="scene" style="overflow:hidden;background:#0A0418;">
         <svg width="100%" height="100%" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice">
           <defs>
             <linearGradient id="qSk" x1="0" y1="0" x2="0" y2="1">
