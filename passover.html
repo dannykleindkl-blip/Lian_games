@@ -504,6 +504,18 @@ function ytFrameError(){if(typeof showYtFallback==='function')showYtFallback();}
   </div>
 </div>
 
+<!-- ══ DEBUG LOG ════════════════════════════════════════════ -->
+<div id="debug-log" style="
+  position:fixed;bottom:0;left:0;right:0;
+  background:rgba(0,0,0,.75);color:#0f0;
+  font-size:11px;font-family:monospace;
+  padding:4px 8px;z-index:99999;
+  pointer-events:none;
+  display:none;
+  max-height:60px;overflow-y:auto;
+  line-height:1.4;
+"></div>
+
 <button class="fab" id="hbtn" onclick="location.href='index.html'">🏠</button>
 <button class="fab" id="mbtn" onclick="toggleMusic()">🎵</button>
 <!-- ─── YOUTUBE MODAL ─────────────────────────────────────────── -->
@@ -1747,7 +1759,7 @@ function ytFrameError(){if(typeof showYtFallback==='function')showYtFallback();}
         <button class="arw" style="background:#8B5018;" onclick="goPage(7)">‹</button>
         <div style="display:flex;align-items:center;gap:6px;">
           <div class="dots" id="d8"></div>
-          <button class="vbtn" style="background:#8B5018;" onclick="speakNow()" ontouchend="event.preventDefault();speakNow()">🔊</button>
+          <button class="vbtn" style="background:#8B5018;" onclick="playLocalAudio('boaz_afikomen_page.mp3')" ontouchend="event.preventDefault();playLocalAudio('boaz_afikomen_page.mp3')">🔊</button>
         </div>
         <button class="arw lk" style="background:#8B5018;" id="n8" onclick="goPage(9)">›</button>
       </div>
@@ -1836,16 +1848,32 @@ function initAudio(){
 }
 
 // ── Local audio files (personal recordings) ───────────────────
+function dbg(msg){
+  const el=document.getElementById('debug-log');
+  if(!el) return;
+  el.style.display='block';
+  el.innerHTML = el.innerHTML + '<div>' + msg + '</div>';
+  // Keep only last 4 lines
+  const lines=el.querySelectorAll('div');
+  if(lines.length>4) lines[0].remove();
+  // Hide after 5 seconds
+  clearTimeout(el._ht);
+  el._ht=setTimeout(()=>el.style.display='none', 5000);
+}
+
 function playLocalAudio(filename, cb){
   if(vcur){try{vcur.pause();vcur.currentTime=0;}catch(e){}}
   window.speechSynthesis&&speechSynthesis.cancel();
   setTalk(true);
+  dbg('▶ Playing: ' + filename);
   const a = new Audio(filename);
   vcur = a;
   a.onended = ()=>{ setTalk(false); cb&&cb(); };
   a.onerror = ()=>{
     setTalk(false);
+    const errMsg = 'ERROR: ' + filename + ' — check GitHub upload';
     console.warn('[audio] FAILED TO LOAD:', filename, '— check file is uploaded to GitHub');
+    dbg('❌ ' + errMsg);
     // Fall back to ElevenLabs TTS for the page
     const _fbMap = {
       'lian_opening.mp3':0,'boaz_Pyramids_page.mp3':1,
@@ -2064,8 +2092,8 @@ function goPage(idx){
   // Auto-narration on page load: ElevenLabs for pages 1-8, local recordings for 0 & 9
   if(idx===9) playLocalAudio('lian_end.mp3');
   else if(idx===6){
-    // Small delay for Questions page (first page shown — splash audio may still be finishing)
-    setTimeout(()=>speak(NARR[6]), 800);
+    // Delay for Questions page — let opening recording finish first
+    setTimeout(()=>speak(NARR[6]), 1500);
   }
   else if(idx>0) speak(NARR[idx]);
 }
@@ -3434,7 +3462,7 @@ window.onload=()=>{
 
   // Audio is handled by splash dismissSplash() — nothing to do here
 };
-  console.log('App Version: 2.7 — explicit vbtn mp3 calls');
+  console.log('App Version: 2.8 — debug log + all vbtns fixed');
 </script>
 </body>
 </html>
