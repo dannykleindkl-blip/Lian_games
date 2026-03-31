@@ -129,6 +129,18 @@ body{
 }
 .pg.active{display:flex;}
 @keyframes pgIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+/* ─── AUDIO LOCK — prevents all taps while any audio plays ── */
+body.audio-locked,
+body.audio-locked *{
+  pointer-events:none !important;
+  -webkit-pointer-events:none !important;
+}
+/* spk-vbtn always stays tappable — it cancels & replays */
+body.audio-locked .spk-vbtn,
+body.audio-locked .spk-vbtn *{
+  pointer-events:auto !important;
+}
+
 
 /* ─── PAGE TITLE ───────────────────────────────────────────────── */
 .pnum{font-size:.6rem;font-weight:800;letter-spacing:3px;
@@ -1809,13 +1821,28 @@ const PH=t=>t
   .replace(/\bNaomi\b/g,'Nay-oh-mee')
   .replace(/\bMaror\b/g,'maaror');
 
+// ── Audio lock helpers ───────────────────────────────────────
+let _lockTimer = null;
+function lockScreen(){
+  isAudioPlaying = true;
+  document.body.classList.add('audio-locked');
+  // Safety valve: always unlock after 15s
+  clearTimeout(_lockTimer);
+  _lockTimer = setTimeout(unlockScreen, 15000);
+}
+function unlockScreen(){
+  isAudioPlaying = false;
+  document.body.classList.remove('audio-locked');
+  clearTimeout(_lockTimer);
+  _lockTimer = null;
+}
+
 function setTalk(on){
   document.querySelectorAll('.vbtn').forEach(b=>b.classList.toggle('tk',on));
-  isAudioPlaying=on;
+  if(on) lockScreen(); else unlockScreen();
   // Visually dim nav arrows while audio plays
   document.querySelectorAll('.arw').forEach(b=>{
     b.style.opacity = on ? '0.4' : '';
-    b.style.pointerEvents = on ? 'none' : '';
   });
 }
 
@@ -1849,14 +1876,13 @@ function initAudio(){
 function playLocalAudio(filename, cb){
   if(vcur){try{vcur.pause();vcur.currentTime=0;}catch(e){}}
   window.speechSynthesis&&speechSynthesis.cancel();
-  isAudioPlaying=true;
-  setTalk(true);
+  lockScreen();
   const a = new Audio(filename);
   vcur = a;
-  a.onplay  = ()=>{ isAudioPlaying=true;  setTalk(true);  };
-  a.onended = ()=>{ isAudioPlaying=false; setTalk(false); cb&&cb(); };
-  a.onerror = ()=>{
-    isAudioPlaying=false; setTalk(false);
+  a.onplay   = ()=>{ lockScreen(); };
+  a.onended  = ()=>{ unlockScreen(); setTalk(false); cb&&cb(); };
+  a.onerror  = ()=>{
+    unlockScreen(); setTalk(false);
     console.warn('[audio] FAILED TO LOAD:', filename, '— check file is uploaded to GitHub');
     // Fall back to ElevenLabs TTS for the page
     const _fbMap = {
@@ -1900,10 +1926,10 @@ function speak(txt,cb){
 
 function blobPlay(u,cb){
   const a=new Audio(u); vcur=a;
-  a.onended=()=>{ isAudioPlaying=false; setTalk(false); cb&&cb(); };
-  a.onerror=()=>{ isAudioPlaying=false; setTalk(false); cb&&cb(); };
+  a.onended=()=>{ unlockScreen(); setTalk(false); cb&&cb(); };
+  a.onerror=()=>{ unlockScreen(); setTalk(false); cb&&cb(); };
   const pr=a.play();
-  if(pr&&pr.catch) pr.catch(()=>{ isAudioPlaying=false; setTalk(false); cb&&cb(); });
+  if(pr&&pr.catch) pr.catch(()=>{ unlockScreen(); setTalk(false); cb&&cb(); });
 }
 function pickFemaleVoice(){
   const vs = speechSynthesis.getVoices();
@@ -1951,7 +1977,7 @@ function fbSpeak(txt,cb){
   u.pitch  = 1.15;
 
   const doIt = () => {
-    isAudioPlaying=true; setTalk(true); // ensure lock is ON for TTS
+    lockScreen(); setTalk(true); // ensure lock is ON for TTS
     const fv = pickFemaleVoice();
     if(fv){
       u.voice = fv;
@@ -1959,9 +1985,9 @@ function fbSpeak(txt,cb){
       // Ava and Nicky sound best a tiny bit slower
       if(/ava|nicky/i.test(fv.name)) u.rate = 0.76;
     }
-    u.onstart= () => { isAudioPlaying=true;  setTalk(true);  };
-    u.onend  = () => { isAudioPlaying=false; setTalk(false); cb && cb(); };
-    u.onerror= () => { isAudioPlaying=false; setTalk(false); cb && cb(); };
+    u.onstart= () => { lockScreen();   setTalk(true);  };
+    u.onend  = () => { unlockScreen(); setTalk(false); cb && cb(); };
+    u.onerror= () => { unlockScreen(); setTalk(false); cb && cb(); };
     speechSynthesis.cancel();
     // iOS: must wait ~80ms after cancel or first syllable is clipped
     setTimeout(() => speechSynthesis.speak(u), 85);
@@ -2047,23 +2073,7 @@ let curPg=0;
 let bDone=0, basketOk=false, fDone=0, seaOk=false;
 let isAudioPlaying=false; // global lock — no interactions while audio plays
 
-// Document-level capture: block ALL clicks/touches when audio plays
-// Using capture:true so it intercepts before any element handler
-function _audioGuard(e){
-  if(!isAudioPlaying) return;
-  // Allow: splash button, spk-vbtn (recording buttons that cancel+replay)
-  const t = e.target;
-  if(!t) return;
-  if(t.id==='splash-btn') return;
-  if(t.classList.contains('spk-vbtn') || t.closest('.spk-vbtn')) return;
-  // Allow: 🔊 buttons (spk-vbtn may contain child elements)
-  if(t.closest && t.closest('button.spk-vbtn')) return;
-  e.stopImmediatePropagation();
-  e.preventDefault();
-}
-document.addEventListener('click',   _audioGuard, true);
-document.addEventListener('touchend', _audioGuard, {capture:true, passive:false});
-document.addEventListener('touchstart', _audioGuard, {capture:true, passive:false});
+// Interaction lock is now handled via CSS: body.audio-locked { pointer-events:none !important }
 let questCount=0, questDone=false;
 let cupsDone=0, sederDone=0, afikOk=false, afikIdx=-1, sIdx=0;
 let frogTimers=[];
@@ -2373,9 +2383,9 @@ function initSea(){
       speak('Moses raised his magic stick... and the sea split wide open! The whole Jewish people walked safely through on dry ground! What an incredible miracle from God!', ()=>{
         unlock(4);
         setTimeout(()=>openYT(
-          'https://www.youtube-nocookie.com/embed/EeduGySHa9o?rel=0&playsinline=1&autoplay=1',
+          'https://www.youtube.com/embed/OqC90Lkq7_0?autoplay=1&mute=1&rel=0&controls=1',
           '🌊 The Sea Splits! — Let My People Go 🎵',
-          'https://www.youtube.com/watch?v=EeduGySHa9o&list=RDEeduGySHa9o&start_radio=1'
+          'https://www.youtube.com/watch?v=OqC90Lkq7_0'
         ), 1500);
       });
     } else { el.style.opacity=''; }
@@ -3485,7 +3495,7 @@ window.onload=()=>{
 
   // Audio is handled by splash dismissSplash() — nothing to do here
 };
-  console.log('App Version: 3.7 — body.pointerEvents lock, seder chain, YT fix');
+  console.log('App Version: 3.7 — CSS audio-locked class, YT fix, seder chain');
 </script>
 </body>
 </html>
