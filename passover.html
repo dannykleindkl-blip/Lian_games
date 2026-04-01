@@ -437,6 +437,8 @@ body.audio-locked .spk-vbtn *{
 @keyframes cupTilt{0%,100%{transform:rotate(0)}40%{transform:rotate(-16deg)}}
 @keyframes scrollUp{0%{transform:translateY(0)}100%{transform:translateY(-50%)}}
 @keyframes softglow{0%,100%{box-shadow:0 0 0 0 rgba(200,160,20,0)}50%{box-shadow:0 0 0 6px rgba(200,160,20,.2)}}
+#ytModal{ display:none; }
+#ytModal.open{ display:flex !important; }
 </style>
 </head>
 <body>
@@ -458,6 +460,29 @@ body.audio-locked .spk-vbtn *{
 </div>
 
 <!-- debug overlay removed -->
+
+<!-- ══ YOUTUBE MODAL ═══════════════════════════════════════ -->
+<div id="ytModal" style="display:none;position:fixed;inset:0;z-index:2000;
+  background:rgba(0,0,0,.88);align-items:center;justify-content:center;flex-direction:column;">
+  <div style="position:relative;width:min(92vw,560px);border-radius:14px;overflow:hidden;
+    background:#000;box-shadow:0 8px 40px rgba(0,0,0,.8);">
+    <div style="display:flex;align-items:center;justify-content:space-between;
+      background:#1a1a1a;padding:8px 12px;">
+      <span id="ytTitle" style="color:#fff;font-size:.9rem;font-weight:700;font-family:sans-serif;">🎵 Song</span>
+      <button onclick="closeYT()" style="background:#E00;color:#fff;border:none;border-radius:50%;
+        width:28px;height:28px;font-size:1rem;cursor:pointer;line-height:1;">✕</button>
+    </div>
+    <div style="position:relative;padding-top:56.25%;">
+      <iframe id="ytFrame" src="" frameborder="0" allow="accelerometer;autoplay;clipboard-write;
+        encrypted-media;gyroscope;picture-in-picture;web-share"
+        allowfullscreen webkit-playsinline playsinline
+        style="position:absolute;top:0;left:0;width:100%;height:100%;"></iframe>
+    </div>
+  </div>
+  <a id="ytFallbackLink" href="#" target="_blank" rel="noopener"
+    style="color:#adf;margin-top:10px;font-size:.8rem;font-family:sans-serif;
+    text-decoration:underline;display:none;">▶ Open on YouTube</a>
+</div>
 
 <button class="fab" id="hbtn" onclick="location.href='index.html'">🏠</button>
 <button class="fab" id="mbtn" onclick="toggleMusic()" style="display:none;">🎵</button>
@@ -1037,7 +1062,7 @@ body.audio-locked .spk-vbtn *{
       </div>
 
       <div style="display:flex;justify-content:center;padding:2px 0;flex-shrink:0;">
-        <button onclick="openYT('https://www.youtube-nocookie.com/embed/o6xL72LIu6c?rel=0&playsinline=1','🍽️ The Seder Plate Song 🎵','https://www.youtube.com/watch?v=o6xL72LIu6c&amp;list=RDo6xL72LIu6c&amp;start_radio=1')" style="
+        <button onclick="openYT('https://www.youtube.com/embed/o6xL72LIu6c','🍽️ The Seder Plate Song 🎵')" style="
           background:linear-gradient(135deg,#C89020,#E8B030);
           color:white;border:none;border-radius:50%;
           width:54px;height:54px;font-size:1.7rem;cursor:pointer;
@@ -1235,7 +1260,7 @@ body.audio-locked .spk-vbtn *{
       </div>
 
       <div style="display:flex;justify-content:center;padding:2px 0;flex-shrink:0;">
-        <button onclick="openYT('https://www.youtube-nocookie.com/embed/l-xBUR2JcNc?rel=0&playsinline=1','🎵 The Four Questions Song — מה נשתנה 🎵','https://www.youtube.com/watch?v=l-xBUR2JcNc&amp;list=RDl-xBUR2JcNc&amp;start_radio=1')" style="
+        <button onclick="openYT('https://www.youtube.com/embed/l-xBUR2JcNc','🎵 The Four Questions Song — מה נשתנה 🎵')" style="
           background:linear-gradient(135deg,#7A0A9B,#B030E0);
           color:white;border:none;border-radius:50%;
           width:40px;height:40px;font-size:1.3rem;cursor:pointer;
@@ -1381,7 +1406,7 @@ body.audio-locked .spk-vbtn *{
       </div>
 
       <div style="display:flex;justify-content:center;padding:2px 0;flex-shrink:0;">
-        <button onclick="openYT('https://www.youtube-nocookie.com/embed/aZcdS-L7mcE?rel=0&playsinline=1','🍷 Dayenu Song — דַּיֵּנוּ 🎵','https://www.youtube.com/watch?v=aZcdS-L7mcE&amp;list=RDl-xBUR2JcNc&amp;index=2')" style="
+        <button onclick="openYT('https://www.youtube.com/embed/aZcdS-L7mcE','🍷 Dayenu Song — דַּיֵּנוּ 🎵')" style="
           background:linear-gradient(135deg,#8B6000,#C89020);
           color:white;border:none;border-radius:50%;
           width:54px;height:54px;font-size:1.7rem;cursor:pointer;
@@ -1731,6 +1756,34 @@ const PH=t=>t
   .replace(/\bNaomi\b/g,'Nay-oh-mee')
   .replace(/\bMaror\b/g,'maaror');
 
+// ══ YOUTUBE MODAL ═══════════════════════════════════════════
+function openYT(embedUrl, titleTxt){
+  const modal = document.getElementById('ytModal');
+  const frame = document.getElementById('ytFrame');
+  const title = document.getElementById('ytTitle');
+  if(!modal || !frame) return;
+  // Pause any playing audio
+  if(window.vcur){try{vcur.pause();}catch(e){}}
+  window.speechSynthesis && speechSynthesis.cancel();
+  // Set title
+  if(title && titleTxt) title.textContent = titleTxt;
+  // Build URL with mandatory iOS params
+  const sep = embedUrl.includes('?') ? '&' : '?';
+  frame.src = embedUrl + sep + 'autoplay=1&mute=1&playsinline=1&rel=0&enablejsapi=1';
+  modal.classList.add('open');
+}
+function closeYT(){
+  const modal = document.getElementById('ytModal');
+  const frame = document.getElementById('ytFrame');
+  if(frame) frame.src = '';
+  if(modal) modal.classList.remove('open');
+}
+// Close on backdrop tap
+document.addEventListener('DOMContentLoaded', function(){
+  const m = document.getElementById('ytModal');
+  if(m) m.addEventListener('click', function(e){ if(e.target===m) closeYT(); });
+});
+
 // ── Audio lock helpers ───────────────────────────────────────
 let _lockTimer = null;
 function lockScreen(){
@@ -2019,7 +2072,7 @@ function goPage(idx){
   if(idx===8&&!afikOk)      initAfikoman();
   if(idx===9)               setTimeout(startConfetti,300);
   // Auto-narration on page load: ElevenLabs for pages 1-8, local recordings for 0 & 9
-  if(idx===9) playLocalAudio('lian_end.mp3');
+  if(idx===9) playLocalAudio('lian_end.mp3', ()=>{ speak(NARR[9]); });
   else if(idx===6){
     // Store timeout ref so tapQ can cancel it if user taps before it fires
     window._pg6IntroTimer = setTimeout(()=>{
