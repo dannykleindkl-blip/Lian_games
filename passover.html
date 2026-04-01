@@ -233,63 +233,6 @@ body.audio-locked .spk-vbtn *{
 @keyframes cfall{to{transform:translateY(110vh) rotate(900deg);opacity:0}}
 
 /* ─── YOUTUBE MODAL ────────────────────────────────────────────── */
-#ytModal{
-  display:none;position:fixed;inset:0;z-index:1000;
-  background:rgba(0,0,0,.88);
-  align-items:center;justify-content:center;
-  animation:ytFadeIn .25s ease both;
-}
-#ytModal.open{display:flex;}
-@keyframes ytFadeIn{from{opacity:0}to{opacity:1}}
-#ytBox{
-  position:relative;
-  width:min(92vw,680px);
-  background:#000;
-  border-radius:14px;
-  border:3px solid #7A0A9B;
-  box-shadow:0 8px 40px rgba(0,0,0,.9);
-  overflow:hidden;
-}
-#ytClose{
-  position:absolute;top:8px;right:8px;
-  background:rgba(122,10,155,.95);color:white;
-  border:none;border-radius:50%;width:36px;height:36px;
-  font-size:1.2rem;cursor:pointer;z-index:20;
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 2px 8px rgba(0,0,0,.6);
-  transition:transform .1s;
-}
-#ytClose:active{transform:scale(.85);}
-#ytHeader{
-  font-family:'Baloo 2',cursive;
-  font-size:.78rem;font-weight:900;
-  color:#F0D0FF;text-align:center;
-  padding:10px 44px 0;
-  background:#000;
-}
-#ytFrameWrap{
-  position:relative;
-  width:100%;
-  padding-top:56.25%; /* 16:9 */
-  background:#111;
-}
-#ytFrame{
-  position:absolute;
-  top:0;left:0;
-  width:100%;height:100%;
-  border:none;
-}
-#ytFallback{
-  position:absolute;
-  top:0;left:0;width:100%;height:100%;
-  display:none;
-  flex-direction:column;
-  align-items:center;justify-content:center;
-  background:linear-gradient(160deg,#1A0428,#280840);
-  padding:16px;
-  text-align:center;
-  box-sizing:border-box;
-}
 
 /* ─── DRAG CLONE ───────────────────────────────────────────────── */
 .drag-clone{position:fixed;pointer-events:none;z-index:9999;touch-action:none;
@@ -501,13 +444,6 @@ body.audio-locked .spk-vbtn *{
 <!-- FIXED BUTTONS -->
 <script>
 // Safe stubs — defined immediately so inline HTML event handlers don't throw
-function ytFrameLoaded(f){
-  try{
-    const t=f.contentDocument&&f.contentDocument.title;
-    if(t!==undefined&&t===''){if(typeof showYtFallback==='function')showYtFallback();}
-  }catch(e){/* cross-origin = YouTube loaded fine */}
-}
-function ytFrameError(){if(typeof showYtFallback==='function')showYtFallback();}
 </script>
 <!-- ══ SPLASH SCREEN ═══════════════════════════════════════ -->
 <div id="splash">
@@ -526,38 +462,6 @@ function ytFrameError(){if(typeof showYtFallback==='function')showYtFallback();}
 <button class="fab" id="hbtn" onclick="location.href='index.html'">🏠</button>
 <button class="fab" id="mbtn" onclick="toggleMusic()" style="display:none;">🎵</button>
 <!-- ─── YOUTUBE MODAL ─────────────────────────────────────────── -->
-<div id="ytModal">
-  <div id="ytBox">
-    <button id="ytClose" onclick="closeYT()">✕</button>
-    <div id="ytHeader">🎵 Passover Song 🎵</div>
-    <div id="ytFrameWrap">
-      <iframe id="ytFrame"
-        src=""
-        allow="encrypted-media; picture-in-picture; fullscreen"
-        allowfullscreen
-        frameborder="0"
-        onload="ytFrameLoaded(this)"
-        onerror="ytFrameError()">
-      </iframe>
-      <div id="ytFallback" style="display:none;">
-        <div style="font-size:2rem;margin-bottom:8px;">🎵</div>
-        <div style="font-size:.8rem;color:#F0D0FF;margin-bottom:14px;line-height:1.5;">
-          To watch the video inside the game,<br>open the game from a web server.<br>
-          <span style="opacity:.6;font-size:.7rem;">For now, tap below to watch:</span>
-        </div>
-        <a id="ytFallbackLink" href="https://www.youtube.com/watch?v=zpxsH3i_zGc&t=4s"
-           target="_blank"
-           style="display:inline-flex;align-items:center;gap:8px;
-                  background:#FF0000;color:white;text-decoration:none;
-                  padding:10px 20px;border-radius:24px;
-                  font-family:'Baloo 2',cursive;font-size:.85rem;font-weight:900;
-                  box-shadow:0 4px 14px rgba(200,0,0,.5);">
-          🎵
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
 
 <div id="fbo"><div id="fbc"></div></div>
 <div id="cfl"></div>
@@ -2392,12 +2296,7 @@ function initSea(){
       if(seaAnim) seaAnim.triggerPart();
       speak('Moses raised his magic stick... and the sea split wide open! The whole Jewish people walked safely through on dry ground! What an incredible miracle from God!', ()=>{
         unlock(4);
-        setTimeout(()=>openYT(
-          'https://www.youtube.com/embed/OqC90Lkq7_0?autoplay=1&mute=1&playsinline=1&rel=0',
-          '🌊 The Sea Splits! — Let My People Go 🎵',
-          'https://www.youtube.com/watch?v=OqC90Lkq7_0'
-        ), 1500);
-      });
+        });
     } else { el.style.opacity=''; }
   });
 }
@@ -3372,37 +3271,6 @@ function resetGame(){
 // ═══════════════════════════════════════════════════════════════════
 // YOUTUBE MODAL
 // ═══════════════════════════════════════════════════════════════════
-function openYT(embedUrl, titleTxt, fallbackUrl){
-  // Store fallback URL so showYtFallback can use it
-  window._ytFallbackUrl = fallbackUrl || 'https://www.youtube.com';
-  // Update modal header
-  const hdr = document.getElementById('ytHeader');
-  if(hdr && titleTxt) hdr.textContent = titleTxt;
-  // Update fallback link href
-  const fa = document.getElementById('ytFallbackLink');
-  if(fa) fa.href = fallbackUrl || 'https://www.youtube.com';
-  const frame=document.getElementById('ytFrame');
-  const fallback=document.getElementById('ytFallback');
-  fallback.style.display='none';
-  frame.style.display='block';
-  frame.src = embedUrl;
-  if(window._ytTimer)clearTimeout(window._ytTimer);
-  window._ytTimer=setTimeout(()=>{
-    try{
-      const doc=frame.contentDocument||frame.contentWindow.document;
-      if(!doc||doc.title===''){showYtFallback();}
-    }catch(e){
-      // Cross-origin means YouTube loaded (good)
-    }
-  },4000);
-  document.getElementById('ytModal').classList.add('open');
-}
-function showYtFallback(){
-  const frame=document.getElementById('ytFrame');
-  const fallback=document.getElementById('ytFallback');
-  frame.style.display='none';
-  fallback.style.display='flex';
-}
 function ytFrameLoaded(f){
   // If the iframe loaded but shows an error page, switch to fallback
   try{
@@ -3411,16 +3279,6 @@ function ytFrameLoaded(f){
   }catch(e){/* cross-origin = YouTube loaded fine */}
 }
 function ytFrameError(){showYtFallback();}
-function closeYT(){
-  if(window._ytTimer)clearTimeout(window._ytTimer);
-  document.getElementById('ytFrame').src='';
-  document.getElementById('ytFallback').style.display='none';
-  document.getElementById('ytFrame').style.display='block';
-  document.getElementById('ytModal').classList.remove('open');
-}
-document.getElementById('ytModal').addEventListener('click',function(e){
-  if(e.target===this)closeYT();
-});
 
 // Extra keyframes
 const xs=document.createElement('style');
